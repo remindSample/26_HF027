@@ -1,6 +1,7 @@
 import { Link } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+
 export default function HomeScreen() {
   return (
     <View style={styles.screen}>
@@ -30,9 +31,11 @@ export default function HomeScreen() {
             누구였나요?
           </Text>
 
-          <Pressable style={styles.answerButton}>
-            <Text style={styles.answerButtonText}>답변 작성하기</Text>
-          </Pressable>
+          <Link href="/question" asChild>
+            <Pressable style={styles.answerButton}>
+              <Text style={styles.answerButtonText}>답변 작성하기</Text>
+            </Pressable>
+          </Link>
         </View>
 
         <View style={styles.menuRow}>
@@ -63,7 +66,9 @@ export default function HomeScreen() {
 
       {/* 하단 탭 */}
       <View style={styles.bottomNav}>
-        <Text style={styles.bottomNavText}>리포트</Text>
+        <Link href="/report" asChild>
+          <Pressable><Text style={styles.bottomNavText}>리포트</Text></Pressable>
+        </Link>
         <Text style={styles.bottomNavText}>홈</Text>
         <Text style={styles.bottomNavText}>앨범</Text>
       </View>

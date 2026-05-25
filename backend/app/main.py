@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routers import game_sessions, game_events
+from app.routers import game_sessions, game_events, answers
 
 
 @asynccontextmanager
@@ -22,6 +22,7 @@ app.add_middleware(
 
 app.include_router(game_sessions.router)
 app.include_router(game_events.router)
+app.include_router(answers.router)
 
 
 @app.get("/")
