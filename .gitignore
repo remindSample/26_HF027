@@ -6,6 +6,9 @@ __pycache__/
 node_modules/
 .expo/
 
+# 환경변수 (비밀번호 포함 - 절대 올리면 안됨)
+.env
+
 # 기타 설정
 .vscode/
 .DS_Store
