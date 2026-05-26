@@ -6,7 +6,7 @@ export default function GamePlayScreen() {
 
   return (
     <View>
-      <Text>선택한 레벨: {level}</Text>
+      <Text className="">선택한 레벨: {level}</Text>
     </View>
   );
 }

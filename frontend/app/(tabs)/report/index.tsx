@@ -1,3 +1,4 @@
+import Header from "@/components/Header";
 import { Link } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
@@ -6,10 +7,7 @@ const CURRENT_MONTH = "2025년 5월";
 export default function ReportMainScreen() {
   return (
     <View className="flex-1 bg-[#F0F8FF]">
-      <View className="h-14 flex-row items-center justify-between px-5 bg-white border-b border-[#E0E0E0]">
-        <Text className="text-lg font-bold text-[#111111]">인지변화보고서</Text>
-        <Text className="text-xl text-[#5BA4A4]">✓</Text>
-      </View>
+      <Header title="인지변화보고서" />
 
       <ScrollView
         className="flex-1"
@@ -69,15 +67,6 @@ export default function ReportMainScreen() {
         </Link>
       </ScrollView>
 
-      <View className="h-[70px] flex-row justify-around items-center bg-white border-t border-[#E0E0E0]">
-        <Text className="text-[15px] font-bold text-[#5BA4A4]">리포트</Text>
-        <Link href="/" asChild>
-          <Pressable>
-            <Text className="text-[15px] font-medium text-[#AAAAAA]">홈</Text>
-          </Pressable>
-        </Link>
-        <Text className="text-[15px] font-medium text-[#AAAAAA]">앨범</Text>
-      </View>
     </View>
   );
 }

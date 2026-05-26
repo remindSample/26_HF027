@@ -1,3 +1,4 @@
+import Header from "@/components/Header";
 import { router } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
@@ -19,13 +20,7 @@ const COMPLETED_DATES = [1, 2, 3, 5, 7, 8, 10, 11];
 export default function ActivityReportScreen() {
   return (
     <View className="flex-1 bg-[#F0F8FF]">
-      <View className="h-14 flex-row items-center justify-between px-4 bg-white border-b border-[#E0E0E0]">
-        <Pressable onPress={() => router.back()} className="w-10 items-center">
-          <Text className="text-2xl text-[#333333]">←</Text>
-        </Pressable>
-        <Text className="text-lg font-bold text-[#111111]">건강 리포트</Text>
-        <View className="w-10" />
-      </View>
+      <Header title="건강 리포트" />
 
       <ScrollView
         className="flex-1"
@@ -167,18 +162,11 @@ export default function ActivityReportScreen() {
             <Text className="text-lg">✏️</Text>
           </View>
           <Text className="text-sm text-[#555555] leading-[22px]">
-            산책을 자주 하세시고, 가족과의 추억을 떠올리셔요.
+            산책을 자주 하 시고, 가족과의 추억을 떠올리셔요.
           </Text>
         </View>
       </ScrollView>
 
-      <View className="h-[70px] flex-row justify-around items-center bg-white border-t border-[#E0E0E0]">
-        <Text className="text-[15px] font-medium text-[#AAAAAA]">리포트</Text>
-        <Pressable onPress={() => router.push("/")}>
-          <Text className="text-[15px] font-medium text-[#AAAAAA]">홈</Text>
-        </Pressable>
-        <Text className="text-[15px] font-medium text-[#AAAAAA]">앨범</Text>
-      </View>
     </View>
   );
 }

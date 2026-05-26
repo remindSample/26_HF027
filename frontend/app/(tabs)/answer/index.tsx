@@ -1,6 +1,7 @@
+import Header from "@/components/Header";
 import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, Text, View } from "react-native";
-
+ 
 export default function AnswerMethodScreen() {
   const { questionId, qType, questionText } = useLocalSearchParams<{
     questionId: string;
@@ -17,15 +18,8 @@ export default function AnswerMethodScreen() {
 
   return (
     <View className="flex-1 bg-[#F0F8FF]">
-      <View className="h-14 flex-row items-center justify-between px-4 bg-white border-b border-[#E0E0E0]">
-        <Pressable onPress={() => router.back()} className="w-10 items-center">
-          <Text className="text-2xl text-[#333333]">←</Text>
-        </Pressable>
-        <Text className="text-lg font-bold text-[#111111]">
-          보호자가 남긴 질문
-        </Text>
-        <View className="w-10" />
-      </View>
+      
+      <Header title="보호자가 남긴 질문"/>
 
       <View className="flex-1 p-5 gap-6">
         <View

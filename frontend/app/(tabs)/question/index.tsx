@@ -1,6 +1,8 @@
 import { Link, router } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
+import Header from "@/components/Header";
+
 type Question = {
   id: number;
   q_type: string;
@@ -31,13 +33,9 @@ const QUESTIONS: Question[] = [
 export default function QuestionScreen() {
   return (
     <View className="flex-1 bg-[#F0F8FF]">
-      <View className="h-14 flex-row items-center justify-between px-4 bg-white border-b border-[#E0E0E0]">
-        <Pressable onPress={() => router.back()} className="w-10 items-center">
-          <Text className="text-2xl text-[#333333]">←</Text>
-        </Pressable>
-        <Text className="text-lg font-bold text-[#111111]">오늘의 질문</Text>
-        <View className="w-10" />
-      </View>
+
+      {/*상단바*/}
+      <Header title="오늘의 질문"/>
 
       <ScrollView
         className="flex-1"
@@ -85,7 +83,7 @@ export default function QuestionScreen() {
               </Text>
               {q.answered && (
                 <Text className="text-xs text-[#5BA4A4] font-semibold">
-                  남 편 완 료 ✓
+                  답변 완료 ✓
                 </Text>
               )}
             </Pressable>
@@ -93,21 +91,6 @@ export default function QuestionScreen() {
         ))}
       </ScrollView>
 
-      <View className="h-[70px] flex-row justify-around items-center bg-white border-t border-[#E0E0E0]">
-        <Link href="/report" asChild>
-          <Pressable>
-            <Text className="text-[15px] font-medium text-[#AAAAAA]">
-              리포트
-            </Text>
-          </Pressable>
-        </Link>
-        <Link href="/" asChild>
-          <Pressable>
-            <Text className="text-[15px] font-medium text-[#AAAAAA]">홈</Text>
-          </Pressable>
-        </Link>
-        <Text className="text-[15px] font-medium text-[#AAAAAA]">앨범</Text>
-      </View>
     </View>
   );
 }

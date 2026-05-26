@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   SafeAreaView,
@@ -7,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import GameHeader from "./GameHeader";
 
 type LevelId = "1" | "2" | "3" | "4" | "5";
 
@@ -41,69 +43,66 @@ export default function LevelScreen() {
     <SafeAreaView className="flex-1 bg-[#555656]">
       <ScrollView
         className="flex-1 bg-[#555656]"
-        contentContainerClassName="px-[47px] pt-6 pb-20 bg-[#555656]"
+        contentContainerClassName="pb-20 bg-[#555656]"
         showsVerticalScrollIndicator={false}
       >
-        <View className="w-full flex-row items-center justify-between">
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.back()}
-            className="flex-row items-center"
-          >
-            <Text className="text-[42px] text-white mr-3">←</Text>
-            <Text className="text-lg text-white mr-3">나가기</Text>
-            <Text className="text-[27px]">✋</Text>
-          </TouchableOpacity>
-
-          <Text className="text-[30px] text-white">🔊</Text>
+        <View className="pt-6 px-4">
+          <GameHeader
+            rightElement={
+              <Ionicons name="volume-high-outline" size={30} color="#FFFFFF" />
+            }
+          />
         </View>
 
-        <View className="items-center mt-[95px] mb-[74px]">
-          <Text className="text-[52px] font-extrabold text-[#D9D9D9] tracking-[8px]">
-            Re:Mind
-          </Text>
-          <Text className="mt-2 text-[24px] text-[#D9D9D9] tracking-[8px]">
-            인지 훈련게임
-          </Text>
-        </View>
+        <View className="px-[36px]">
+          <View className="items-center mt-[40px] mb-[74px]">
+            <Text className="text-[52px] font-extrabold text-[#D9D9D9] tracking-[8px]">
+              Re:Mind
+            </Text>
+            <Text className="mt-2 text-[24px] text-[#D9D9D9] tracking-[8px]">
+              인지 훈련게임
+            </Text>
+          </View>
 
-        <View className="w-full">
-          {LEVELS.map((level) => {
-            const isSelected = selectedLevel === level.id;
+          <View className="w-full">
+            {LEVELS.map((level) => {
+              const isSelected = selectedLevel === level.id;
 
-            return (
-              <TouchableOpacity
-                key={level.id}
-                activeOpacity={0.75}
-                onPress={() => setSelectedLevel(level.id)}
-                className={`w-full h-[94px] rounded-[18px] px-8 mb-[26px] flex-row items-center justify-between overflow-hidden ${
-                  isSelected ? "bg-[#D9D9D9]" : "bg-[#BDBDBD]"
-                }`}
-              >
-                <View className="shrink">
-                  <Text className="text-[27px] font-bold text-[#3F3F3F] mb-1.5">
-                    {level.title}
+              return (
+                <TouchableOpacity
+                  key={level.id}
+                  activeOpacity={0.75}
+                  onPress={() => setSelectedLevel(level.id)}
+                  className={`w-full h-[70px] rounded-[15px] px-8 mb-[18px] flex-row items-center justify-between overflow-hidden ${
+                    isSelected ? "bg-[#D9D9D9]" : "bg-[#BDBDBD]"
+                  }`}
+                >
+                  <View className="shrink">
+                    <Text className="text-[22px] font-bold text-[#3F3F3F] mb-1.5">
+                      {level.title}
+                    </Text>
+                    <Text className="text-[16px] text-[#777777]">{level.label}</Text>
+                  </View>
+
+                  <Text className="text-[36px] text-[#4A4A4A] tracking-[-2px]">
+                    {"★".repeat(level.starCount)}
                   </Text>
-                  <Text className="text-lg text-[#777777]">{level.label}</Text>
-                </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-                <Text className="text-[36px] text-[#4A4A4A] tracking-[-2px]">
-                  {"★".repeat(level.starCount)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+          <TouchableOpacity
+            activeOpacity={0.75}
+            onPress={handleStartGame}
+            className="w-[216px] h-[68px] rounded-3xl border-[5px] border-[#D9D9D9] self-center items-center justify-center mt-[31px]"
+          >
+            <Text className="text-[28px] font-bold text-[#D9D9D9]">
+              게임 시작하기
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          activeOpacity={0.75}
-          onPress={handleStartGame}
-          className="w-[290px] h-[90px] rounded-3xl border-[5px] border-[#D9D9D9] self-center items-center justify-center mt-[39px]"
-        >
-          <Text className="text-[34px] font-bold text-[#D9D9D9]">
-            게임 시작하기
-          </Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
