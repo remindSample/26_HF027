@@ -7,15 +7,22 @@ export default function RootLayout() {
   return (
     <>
       <Stack>
-        <Stack.Screen name="index" options={{ title: "홈" }} />
+        {/* 하단 바가 들어가는 화면 묶음 */}
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
         {/* 게임 내부에서 헤더를 관리하므로 숨김 */}
         <Stack.Screen name="game" options={{ headerShown: false }} />
+
+        <Stack.Screen name="answer" options={{ headerShown: false }} />
+
+        <Stack.Screen name="question" options={{ headerShown: false }} />
 
         <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
         />
+
+        <Stack.Screen name="test" options={{ title: "테스트" }} />
       </Stack>
 
       <StatusBar style="auto" />

@@ -1,13 +1,14 @@
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import GameHeader from "./GameHeader";
 
 type LevelId = "1" | "2" | "3" | "4" | "5";
 
@@ -39,204 +40,70 @@ export default function LevelScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView className="flex-1 bg-[#555656]">
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        className="flex-1 bg-[#555656]"
+        contentContainerClassName="pb-20 bg-[#555656]"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        <View className="pt-6 px-4">
+          <GameHeader
+            rightElement={
+              <Ionicons name="volume-high-outline" size={30} color="#FFFFFF" />
+            }
+          />
+        </View>
+
+        <View className="px-[36px]">
+          <View className="items-center mt-[40px] mb-[74px]">
+            <Text className="text-[52px] font-extrabold text-[#D9D9D9] tracking-[8px]">
+              Re:Mind
+            </Text>
+            <Text className="mt-2 text-[24px] text-[#D9D9D9] tracking-[8px]">
+              인지 훈련게임
+            </Text>
+          </View>
+
+          <View className="w-full">
+            {LEVELS.map((level) => {
+              const isSelected = selectedLevel === level.id;
+
+              return (
+                <TouchableOpacity
+                  key={level.id}
+                  activeOpacity={0.75}
+                  onPress={() => setSelectedLevel(level.id)}
+                  className={`w-full h-[70px] rounded-[15px] px-8 mb-[18px] flex-row items-center justify-between overflow-hidden ${
+                    isSelected ? "bg-[#D9D9D9]" : "bg-[#BDBDBD]"
+                  }`}
+                >
+                  <View className="shrink">
+                    <Text className="text-[22px] font-bold text-[#3F3F3F] mb-1.5">
+                      {level.title}
+                    </Text>
+                    <Text className="text-[16px] text-[#777777]">{level.label}</Text>
+                  </View>
+
+                  <Text className="text-[36px] text-[#4A4A4A] tracking-[-2px]">
+                    {"★".repeat(level.starCount)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.back()}
-            style={styles.exitArea}
+            activeOpacity={0.75}
+            onPress={handleStartGame}
+            className="w-[216px] h-[68px] rounded-3xl border-[5px] border-[#D9D9D9] self-center items-center justify-center mt-[31px]"
           >
-            <Text style={styles.backIcon}>←</Text>
-            <Text style={styles.exitText}>나가기</Text>
-            <Text style={styles.handIcon}>✋</Text>
+            <Text className="text-[28px] font-bold text-[#D9D9D9]">
+              게임 시작하기
+            </Text>
           </TouchableOpacity>
-
-          <Text style={styles.soundIcon}>🔊</Text>
         </View>
 
-        <View style={styles.logoArea}>
-          <Text style={styles.logoText}>Re:Mind</Text>
-          <Text style={styles.subTitle}>인지 훈련게임</Text>
-        </View>
-
-        <View style={styles.levelList}>
-          {LEVELS.map((level) => {
-            const isSelected = selectedLevel === level.id;
-
-            return (
-              <TouchableOpacity
-                key={level.id}
-                activeOpacity={0.75}
-                onPress={() => setSelectedLevel(level.id)}
-                style={[
-                  styles.levelCard,
-                  isSelected
-                    ? styles.selectedLevelCard
-                    : styles.defaultLevelCard,
-                ]}
-              >
-                <View style={styles.levelTextArea}>
-                  <Text style={styles.levelTitle}>{level.title}</Text>
-                  <Text style={styles.levelLabel}>{level.label}</Text>
-                </View>
-
-                <Text style={styles.stars}>{"★".repeat(level.starCount)}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <TouchableOpacity
-          activeOpacity={0.75}
-          onPress={handleStartGame}
-          style={styles.startButton}
-        >
-          <Text style={styles.startButtonText}>게임 시작하기</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#555656",
-  },
-
-  scrollView: {
-    flex: 1,
-    backgroundColor: "#555656",
-  },
-
-  scrollContent: {
-    paddingHorizontal: 47,
-    paddingTop: 24,
-    paddingBottom: 80,
-    backgroundColor: "#555656",
-  },
-
-  header: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  exitArea: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  backIcon: {
-    fontSize: 42,
-    color: "#FFFFFF",
-    marginRight: 12,
-  },
-
-  exitText: {
-    fontSize: 18,
-    color: "#FFFFFF",
-    marginRight: 12,
-  },
-
-  handIcon: {
-    fontSize: 27,
-  },
-
-  soundIcon: {
-    fontSize: 30,
-    color: "#FFFFFF",
-  },
-
-  logoArea: {
-    alignItems: "center",
-    marginTop: 95,
-    marginBottom: 74,
-  },
-
-  logoText: {
-    fontSize: 52,
-    fontWeight: "800",
-    color: "#D9D9D9",
-    letterSpacing: 8,
-  },
-
-  subTitle: {
-    marginTop: 8,
-    fontSize: 24,
-    color: "#D9D9D9",
-    letterSpacing: 8,
-  },
-
-  levelList: {
-    width: "100%",
-  },
-
-  levelCard: {
-    width: "100%",
-    height: 94,
-    borderRadius: 18,
-    paddingHorizontal: 32,
-    marginBottom: 26,
-
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-
-    overflow: "hidden",
-  },
-
-  defaultLevelCard: {
-    backgroundColor: "#BDBDBD",
-  },
-
-  selectedLevelCard: {
-    backgroundColor: "#D9D9D9",
-  },
-
-  levelTextArea: {
-    flexShrink: 1,
-  },
-
-  levelTitle: {
-    fontSize: 27,
-    fontWeight: "700",
-    color: "#3F3F3F",
-    marginBottom: 6,
-  },
-
-  levelLabel: {
-    fontSize: 18,
-    color: "#777777",
-  },
-
-  stars: {
-    fontSize: 36,
-    color: "#4A4A4A",
-    letterSpacing: -2,
-  },
-
-  startButton: {
-    width: 290,
-    height: 90,
-    borderRadius: 24,
-    borderWidth: 5,
-    borderColor: "#D9D9D9",
-    alignSelf: "center",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 39,
-  },
-
-  startButtonText: {
-    fontSize: 34,
-    fontWeight: "700",
-    color: "#D9D9D9",
-  },
-});

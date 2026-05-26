@@ -1,0 +1,28 @@
+import { router } from "expo-router";
+import { Pressable, Text, View } from "react-native";
+
+type HeaderProps = {
+  title: string;
+  showBackButton?: boolean;
+};
+
+export default function Header({
+  title,
+  showBackButton = true,
+}: HeaderProps) {
+  return (
+    <View className="h-34 flex-row items-center justify-between border-b border-[#E0E0E0] bg-white px-4 pt-12 pb-5">
+      {showBackButton ? (
+        <Pressable onPress={() => router.back()} className="w-10 items-center">
+          <Text className="text-2xl text-[#333333]">←</Text>
+        </Pressable>
+      ) : (
+        <View className="w-10" />
+      )}
+
+      <Text className="text-lg font-bold text-[#111111]">{title}</Text>
+
+      <View className="w-10" />
+    </View>
+  );
+}
