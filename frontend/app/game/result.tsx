@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router'
-import { SafeAreaView, Text, TouchableOpacity, View } from 'react-native'
+import { Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import GameHeader from './GameHeader'
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -36,7 +37,7 @@ export default function ResultScreen() {
   const scoreFormatted = Number(score ?? 0).toLocaleString()
 
   return (
-    <SafeAreaView className="flex-1 bg-[#535353]">
+    <SafeAreaView edges={["top"]} className="flex-1 bg-[#535353]">
       <View className="flex-1 px-4">
         <GameHeader />
 

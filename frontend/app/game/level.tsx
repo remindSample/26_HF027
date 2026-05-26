@@ -2,12 +2,12 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-  SafeAreaView,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import GameHeader from "./GameHeader";
 
 type LevelId = "1" | "2" | "3" | "4" | "5";
@@ -40,7 +40,7 @@ export default function LevelScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#555656]">
+    <SafeAreaView edges={["top"]} className="flex-1 bg-[#555656]">
       <ScrollView
         className="flex-1 bg-[#555656]"
         contentContainerClassName="pb-20 bg-[#555656]"

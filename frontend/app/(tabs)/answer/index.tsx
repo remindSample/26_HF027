@@ -18,7 +18,7 @@ export default function AnswerMethodScreen() {
 
   return (
     <View className="flex-1 bg-[#F0F8FF]">
-      
+
       <Header title="보호자가 남긴 질문"/>
 
       <View className="flex-1 p-5 gap-6">

@@ -1,9 +1,11 @@
 import { router } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import GameHeader from "./GameHeader";
 
 export default function GameHomeScreen() {
   return (
+    <SafeAreaView edges={["top"]} className="flex-1 bg-[#55595A]">
     <ScrollView contentContainerClassName="grow bg-[#55595A]">
       <View className="flex-1 min-h-full bg-[#55595A] pt-6 pb-12">
         <View className="px-4">
@@ -68,5 +70,6 @@ export default function GameHomeScreen() {
         </View>
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }

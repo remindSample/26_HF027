@@ -7,7 +7,7 @@ export default function HomeScreen() {
   return (
     <View className="flex-1 bg-white">
       {/* 상단 바 */}
-      <View className="h-34 flex-row items-center justify-end border-b border-[#E0E0E0] bg-white px-4 pt-12 pb-5">
+      <View className="flex-row items-center justify-end border-b border-[#E0E0E0] bg-white px-4 py-5">
         <Pressable className="w-10 items-center">
           <Text className="text-2xl text-[#d2d2d2]">설정</Text>
         </Pressable>
@@ -52,7 +52,7 @@ export default function HomeScreen() {
         <View className="flex-row gap-[18px]">
           <Link href="/game" asChild>
             <Pressable className="w-[136px] h-[182px] border-2 border-[#9CC7CA] bg-[#E9F6F6] rounded-[14px] items-center justify-center">
-              <Image source={Ic_Game3} />
+              <Image source={Ic_Game3} style={{width: 70, height: 70}}/>
 
               <Text className="text-[17px] leading-6 font-medium text-[#111111] text-center">
                 손동작 게임{"\n"}시작
