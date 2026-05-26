@@ -1,7 +1,7 @@
 import { Link } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
-import Ic_Game from "../../assets/Icon/Ic_Game.png";
+import Ic_Game3 from "../../assets/Icon/Ic_Game3.png";
 
 export default function HomeScreen() {
   return (
@@ -52,7 +52,7 @@ export default function HomeScreen() {
         <View className="flex-row gap-[18px]">
           <Link href="/game" asChild>
             <Pressable className="w-[136px] h-[182px] border-2 border-[#9CC7CA] bg-[#E9F6F6] rounded-[14px] items-center justify-center">
-              <Image source={Ic_Game} />
+              <Image source={Ic_Game3} />
 
               <Text className="text-[17px] leading-6 font-medium text-[#111111] text-center">
                 손동작 게임{"\n"}시작
