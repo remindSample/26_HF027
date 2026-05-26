@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 
 import Ic_Volume from "../../assets/Icon/Ic_Volume.png";
+import Ic_DeviceOn from "../../assets/Icon/Ic_DeviceOn.png";
+import Ic_Game_Exit from "../../assets/Icon/Ic_Game_Exit.png";
 
 type GameHeaderProps = {
   title?: string;
@@ -36,10 +38,10 @@ export default function GameHeader({
           className="min-h-12 flex-row items-center pr-4"
           onPress={handleBackPress}
         >
-          <Ionicons name="chevron-back" size={42} color="#FFFFFF" />
-          <Text className="ml-1 text-lg font-medium text-white">{title}</Text>
+          <Image source={Ic_Game_Exit} style={{width: 30, height: 30}} />
+          <Text className="ml-3 text-[20px] font-medium text-white">{title}</Text>
           <View className="ml-3">
-            <Ionicons name="exit-outline" size={28} color="#EB7E7B" />
+            <Image source={Ic_DeviceOn} style={{width: 26, height: 26}} />
           </View>
         </Pressable>
       ) : (
