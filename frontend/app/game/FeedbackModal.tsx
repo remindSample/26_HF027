@@ -37,7 +37,7 @@ export default function FeedbackModal({ visible, type }: Props) {
 
   return (
     <View
-      pointerEvents="none"
+      style={{ pointerEvents: 'none' }}
       className="absolute inset-0 items-center justify-start pt-[140px] z-10"
     >
       <View 
