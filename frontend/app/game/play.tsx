@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import FeedbackModal, { FeedbackType } from './FeedbackModal'
 import GameHeader from './GameHeader'
 import GameScoreBar from './GameScoreBar'
@@ -63,6 +64,7 @@ export default function GamePlayScreen() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const totalPairsSpawnedRef = useRef(0)
   const navigatedRef = useRef(false)
+  const hasStartedRef = useRef(false)
 
   // 결과 화면 전달용 통계
   const scoreRef = useRef(0)
@@ -191,8 +193,13 @@ export default function GamePlayScreen() {
   useEffect(() => {
     if (columnHeight === 0) return
 
-    spawnPair()
+    // 첫 스폰만 1회 실행 (Strict Mode 이중 호출 방지)
+    if (!hasStartedRef.current) {
+      hasStartedRef.current = true
+      spawnPair()
+    }
 
+    // 인터벌은 cleanup 후 재설정될 수 있으므로 항상 다시 등록
     intervalRef.current = setInterval(() => {
       if (!isUnmountedRef.current) spawnPair()
     }, SPAWN_INTERVAL)
@@ -249,7 +256,7 @@ export default function GamePlayScreen() {
   }, [resolveLane])
 
   return (
-    <View className="flex-1 bg-[#535353]">
+    <SafeAreaView edges={['top']} className="flex-1 bg-[#535353]">
       {/* Header */}
       <View className="px-4">
         <GameHeader />
@@ -273,7 +280,7 @@ export default function GamePlayScreen() {
       <View className="flex-1 flex-row px-4 mb-2">
         {/* Left column */}
         <View
-          className="flex-1 bg-[#DCDCDC] rounded-[14px] overflow-hidden"
+          className="flex-1 bg-[#DCDCDC] rounded-[14px]"
           onLayout={e => {
             const h = e.nativeEvent.layout.height
             columnHeightRef.current = h
@@ -297,7 +304,7 @@ export default function GamePlayScreen() {
         <View className="w-[10px]" />
 
         {/* Right column */}
-        <View className="flex-1 bg-[#DCDCDC] rounded-[14px] overflow-hidden">
+        <View className="flex-1 bg-[#DCDCDC] rounded-[14px]">
           {notes.filter(n => n.lane === 'right').map(note => (
             <Animated.View
               key={note.id}
@@ -351,7 +358,7 @@ export default function GamePlayScreen() {
           </View>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   )
 }
 
