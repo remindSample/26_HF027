@@ -7,12 +7,12 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import FeedbackModal, { FeedbackType } from './FeedbackModal'
+import GameHeader from './GameHeader'
+import GameScoreBar from './GameScoreBar'
 
 type GestureType = 'paper' | 'rock'
 type Lane = 'left' | 'right'
-type Hand = 'LEFT' | 'RIGHT'
-type Gesture = 'FIST' | 'PALM'
-type FeedbackType = 'great' | 'close' | 'miss'
 type LaneResult = 'correct' | 'wrong' | 'pending'
 
 interface Note {
@@ -255,29 +255,19 @@ export default function GamePlayScreen() {
     resolveLane(bottommost.pairId, lane, bottommost.type === gesture ? 'correct' : 'wrong')
   }, [resolveLane])
 
-  const handleInput = useCallback((hand: Hand, gesture: Gesture) => {
-    const lane: Lane = hand === 'LEFT' ? 'left' : 'right'
-    const gameGesture: GestureType = gesture === 'FIST' ? 'rock' : 'paper'
-
-    handleGesture(lane, gameGesture)
-  }, [handleGesture])
-
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-[#535353]">
-      <View className="px-4 pt-5">
-        <TouchableOpacity
-          className="min-h-12 flex-row items-center"
-          onPress={() => router.back()}
-        >
-          <Text className="text-[20px] font-medium text-white">← 나가기</Text>
-        </TouchableOpacity>
+      {/* Header */}
+      <View className="px-4">
+        <GameHeader />
       </View>
 
-      <View className="flex-row justify-evenly items-center py-2.5">
-        <ScoreItem value={score.toLocaleString()} label="점수" />
-        <ScoreItem value={String(consecutiveCount)} label="연속성공횟수" />
-        <ScoreItem value={String(exerciseCount)} label="운동량" />
-      </View>
+      {/* Score Bar */}
+      <GameScoreBar
+        score={score}
+        consecutiveCount={consecutiveCount}
+        exerciseCount={exerciseCount}
+      />
 
       {/* Lane Labels */}
       <View className="flex-row px-4 mt-0.5 mb-1">
@@ -340,13 +330,13 @@ export default function GamePlayScreen() {
           <View className="flex-1 flex-row gap-2">
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleInput('LEFT', 'FIST')}
+              onPress={() => handleGesture('left', 'rock')}
             >
               <Text className="text-[28px]">✊</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleInput('LEFT', 'PALM')}
+              onPress={() => handleGesture('left', 'paper')}
             >
               <Text className="text-[28px]">🖐️</Text>
             </TouchableOpacity>
@@ -355,13 +345,13 @@ export default function GamePlayScreen() {
           <View className="flex-1 flex-row gap-2">
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleInput('RIGHT', 'FIST')}
+              onPress={() => handleGesture('right', 'rock')}
             >
               <Text className="text-[28px]">✊</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleInput('RIGHT', 'PALM')}
+              onPress={() => handleGesture('right', 'paper')}
             >
               <Text className="text-[28px]">🖐️</Text>
             </TouchableOpacity>
@@ -378,37 +368,6 @@ function DashedHitLine() {
       {Array.from({ length: 30 }).map((_, i) => (
         <View key={i} className="w-[6px] h-[2px] bg-[#999] mr-[5px]" />
       ))}
-    </View>
-  )
-}
-
-function ScoreItem({ value, label }: { value: string; label: string }) {
-  return (
-    <View className="items-center">
-      <Text className="text-[22px] font-bold text-[#d9d9d9]">{value}</Text>
-      <Text className="text-[18px] text-[#d9d9d9] mt-0.5">{label}</Text>
-    </View>
-  )
-}
-
-function FeedbackModal({ visible, type }: { visible: boolean; type: FeedbackType | null }) {
-  if (!visible || !type) return null
-
-  const label =
-    type === 'great'
-      ? '잘했어요 !'
-      : type === 'close'
-        ? '아쉬워요 !'
-        : '실수예요 !'
-
-  return (
-    <View
-      style={{ pointerEvents: 'none' }}
-      className="absolute inset-0 items-center justify-start pt-[140px] z-10"
-    >
-      <View className="px-12 py-3 rounded-[12px] border-2 border-[#5B6A89]/60 bg-[#76869C]/50">
-        <Text className="text-white text-xl font-bold">{label}</Text>
-      </View>
     </View>
   )
 }
