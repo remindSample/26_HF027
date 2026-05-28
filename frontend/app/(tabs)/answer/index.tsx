@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import { router, useLocalSearchParams } from "expo-router";
+import { type Href, router, useLocalSearchParams } from "expo-router";
 import { Pressable, Text, View } from "react-native";
  
 export default function AnswerMethodScreen() {
@@ -9,11 +9,11 @@ export default function AnswerMethodScreen() {
     questionText: string;
   }>();
 
-  const goTo = (method: string) => {
+  const goTo = (method: "camera" | "gallery" | "write") => {
     router.push({
       pathname: `/answer/${method}`,
       params: { questionId, qType, questionText },
-    });
+    } as Href);
   };
 
   return (
@@ -41,7 +41,7 @@ export default function AnswerMethodScreen() {
           <Pressable
             className="flex-row items-center gap-4 bg-white rounded-[14px] px-[22px] py-5"
             style={{ elevation: 1 }}
-            onPress={() => goTo("gallery")}
+            onPress={() => goTo("camera")}
           >
             <Text className="text-[26px]">📷</Text>
             <Text className="text-[17px] font-semibold text-[#333333]">

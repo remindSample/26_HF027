@@ -13,6 +13,8 @@ import GameScoreBar from './GameScoreBar'
 
 type GestureType = 'paper' | 'rock'
 type Lane = 'left' | 'right'
+type Hand = 'LEFT' | 'RIGHT'
+type Gesture = 'FIST' | 'PALM'
 type LaneResult = 'correct' | 'wrong' | 'pending'
 
 interface Note {
@@ -255,6 +257,13 @@ export default function GamePlayScreen() {
     resolveLane(bottommost.pairId, lane, bottommost.type === gesture ? 'correct' : 'wrong')
   }, [resolveLane])
 
+  const handleInput = useCallback((hand: Hand, gesture: Gesture) => {
+    const lane: Lane = hand === 'LEFT' ? 'left' : 'right'
+    const gameGesture: GestureType = gesture === 'FIST' ? 'rock' : 'paper'
+
+    handleGesture(lane, gameGesture)
+  }, [handleGesture])
+
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-[#535353]">
       {/* Header */}
@@ -330,13 +339,13 @@ export default function GamePlayScreen() {
           <View className="flex-1 flex-row gap-2">
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleGesture('left', 'rock')}
+              onPress={() => handleInput('LEFT', 'FIST')}
             >
               <Text className="text-[28px]">✊</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleGesture('left', 'paper')}
+              onPress={() => handleInput('LEFT', 'PALM')}
             >
               <Text className="text-[28px]">🖐️</Text>
             </TouchableOpacity>
@@ -345,13 +354,13 @@ export default function GamePlayScreen() {
           <View className="flex-1 flex-row gap-2">
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleGesture('right', 'rock')}
+              onPress={() => handleInput('RIGHT', 'FIST')}
             >
               <Text className="text-[28px]">✊</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleGesture('right', 'paper')}
+              onPress={() => handleInput('RIGHT', 'PALM')}
             >
               <Text className="text-[28px]">🖐️</Text>
             </TouchableOpacity>
