@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { type Href, router, useLocalSearchParams } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function AnswerMethodScreen() {
@@ -8,11 +8,11 @@ export default function AnswerMethodScreen() {
     questionText: string;
   }>();
 
-  const goTo = (method: string) => {
+  const goTo = (method: "camera" | "gallery" | "write") => {
     router.push({
       pathname: `/answer/${method}`,
       params: { questionId, qType, questionText },
-    });
+    } as Href);
   };
 
   return (
@@ -33,7 +33,7 @@ export default function AnswerMethodScreen() {
         </View>
 
         <View style={styles.methodList}>
-          <Pressable style={styles.methodBtn} onPress={() => goTo("gallery")}>
+          <Pressable style={styles.methodBtn} onPress={() => goTo("camera")}>
             <Text style={styles.methodIcon}>📷</Text>
             <Text style={styles.methodText}>카메라 촬영</Text>
           </Pressable>
