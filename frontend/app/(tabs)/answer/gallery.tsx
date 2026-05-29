@@ -1,5 +1,6 @@
+import Header from "@/components/Header";
 import * as ImagePicker from "expo-image-picker";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 
@@ -28,13 +29,7 @@ export default function GalleryAnswerScreen() {
 
   return (
     <View className="flex-1 bg-[#F0F8FF]">
-      <View className="h-14 flex-row items-center justify-between border-b border-[#E0E0E0] bg-white px-4">
-        <Pressable className="w-10 items-center" onPress={() => router.back()}>
-          <Text className="text-2xl text-[#333333]">←</Text>
-        </Pressable>
-        <Text className="text-lg font-bold text-[#111111]">갤러리에서 가져오기</Text>
-        <View className="w-10" />
-      </View>
+      <Header title="갤러리에서 가져오기" />
 
       <View className="flex-1 p-5 gap-4">
         <View className="bg-white rounded-[14px] p-4 gap-2" style={{ elevation: 1 }}>
