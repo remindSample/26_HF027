@@ -41,7 +41,7 @@ export default function AnswerMethodScreen() {
           <Pressable
             className="flex-row items-center gap-4 bg-white rounded-[14px] px-[22px] py-5"
             style={{ elevation: 1 }}
-            onPress={() => goTo("gallery")}
+            onPress={() => goTo("camera")}
           >
             <Text className="text-[26px]">📷</Text>
             <Text className="text-[17px] font-semibold text-[#333333]">
