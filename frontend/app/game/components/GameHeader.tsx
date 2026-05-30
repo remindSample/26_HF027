@@ -2,9 +2,9 @@ import { router } from "expo-router";
 import type { ReactNode } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 
-import Ic_Volume from "../../assets/Icon/Ic_Volume.png";
-import Ic_DeviceOn from "../../assets/Icon/Ic_DeviceOn.png";
-import Ic_Game_Exit from "../../assets/Icon/Ic_Game_Exit.png";
+import Ic_Volume from "../../../assets/Icon/Ic_Volume.png";
+import Ic_DeviceOn from "../../../assets/Icon/Ic_DeviceOn.png";
+import Ic_Game_Exit from "../../../assets/Icon/Ic_Game_Exit.png";
 
 type GameHeaderProps = {
   title?: string;

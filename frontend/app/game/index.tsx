@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import GameHeader from "./GameHeader";
+import GameHeader from "./components/GameHeader";
 
 export default function GameHomeScreen() {
   return (
