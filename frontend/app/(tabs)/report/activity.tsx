@@ -1,5 +1,6 @@
-﻿import Header from "@/components/Header";
-import { ScrollView, Text, View } from "react-native";
+import Header from "@/components/Header";
+import { router } from "expo-router";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 // 데모용 mock 데이터 (실제 API 연결 시 교체)
 const MOCK_DATA = {

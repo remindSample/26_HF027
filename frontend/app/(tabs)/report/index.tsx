@@ -1,4 +1,4 @@
-﻿import Header from "@/components/Header";
+import Header from "@/components/Header";
 import { Link } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
@@ -7,7 +7,7 @@ const CURRENT_MONTH = "2025년 5월";
 export default function ReportMainScreen() {
   return (
     <View className="flex-1 bg-[#F0F8FF]">
-      <Header title="인지변화보고서" showBackButton={false} />
+      <Header title="인지변화보고서" />
 
       <ScrollView
         className="flex-1"

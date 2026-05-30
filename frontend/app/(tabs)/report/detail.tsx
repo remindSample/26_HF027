@@ -1,5 +1,7 @@
-﻿import Header from "@/components/Header";
-import { ScrollView, Text, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, ScrollView, Text, View } from "react-native";
+
+import Header from "@/components/Header";
 
 // 데모용 mock 데이터
 const WORD_USAGE = [

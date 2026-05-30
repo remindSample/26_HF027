@@ -1,7 +1,7 @@
 import Header from "@/components/Header";
 import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, Text, View } from "react-native";
-
+ 
 export default function AnswerMethodScreen() {
   const { questionId, qType, questionText } = useLocalSearchParams<{
     questionId: string;

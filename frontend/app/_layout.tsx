@@ -14,10 +14,16 @@ export default function RootLayout() {
         {/* 게임 내부에서 헤더를 관리하므로 숨김 */}
         <Stack.Screen name="game" options={{ headerShown: false }} />
 
+        <Stack.Screen name="answer" options={{ headerShown: false }} />
+
+        <Stack.Screen name="question" options={{ headerShown: false }} />
+
         <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
         />
+
+        <Stack.Screen name="test" options={{ title: "테스트" }} />
       </Stack>
 
       <StatusBar style="auto" />
