@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import GameHeader from './GameHeader'
+import GameHeader from './components/GameHeader'
 
 const LEVEL_LABELS: Record<string, string> = {
   '1': '매우 쉬움',

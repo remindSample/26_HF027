@@ -7,9 +7,9 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import FeedbackModal, { FeedbackType } from './FeedbackModal'
-import GameHeader from './GameHeader'
-import GameScoreBar from './GameScoreBar'
+import FeedbackModal, { FeedbackType } from './components/FeedbackModal'
+import GameHeader from './components/GameHeader'
+import GameScoreBar from './components/GameScoreBar'
 
 type GestureType = 'paper' | 'rock'
 type Lane = 'left' | 'right'

@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import GameHeader from "./GameHeader";
+import GameHeader from "./components/GameHeader";
 
 type LevelId = "1" | "2" | "3" | "4" | "5";
 
