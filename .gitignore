@@ -11,3 +11,4 @@ node_modules/
 # 기타
 .vscode/
 .DS_Store
+backend/remind_db_v10.sql
