@@ -5,11 +5,7 @@ from app.schemas.game_session import SessionCreate
 
 
 def create_session(db: Session, data: SessionCreate) -> GameSession:
-    session = GameSession(
-        user_id=data.user_id,
-        game_type=data.game_type,
-        level=data.level,
-    )
+    session = GameSession(user_id=data.user_id, level=data.level)
     db.add(session)
     db.commit()
     db.refresh(session)
@@ -26,8 +22,8 @@ def finish_session(
     success_count: int,
     total_count: int,
 ) -> GameSession:
-    accuracy = round(success_count / total_count, 4) if total_count > 0 else 0.0
-    score_per_success = 10 * (session.level or 1)
+    accuracy = round(success_count / total_count * 100, 1) if total_count > 0 else 0.0
+    score_per_success = 10 * session.level
     total_score = success_count * score_per_success
 
     session.status = "finished"

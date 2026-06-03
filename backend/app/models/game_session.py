@@ -17,4 +17,4 @@ class GameSession(Base):
     total_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     success_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     total_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    accuracy: Mapped[float | None] = mapped_column(Numeric(5, 4), nullable=True)
+    accuracy: Mapped[float | None] = mapped_column(Numeric(5, 1), nullable=True)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.question import QuestionCreate, QuestionResponse
+from app.schemas.question import QuestionCreate, QuestionResponse, Q_TYPE
 from app.crud import question_crud
 
 router = APIRouter(prefix="/questions", tags=["questions"])
@@ -21,5 +21,5 @@ def get(question_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/user/{user_id}", response_model=list[QuestionResponse])
-def get_by_user(user_id: int, db: Session = Depends(get_db)):
-    return question_crud.get_by_target_user(db, user_id)
+def get_by_user(user_id: int, q_type: Q_TYPE | None = None, db: Session = Depends(get_db)):
+    return question_crud.get_by_target_user(db, user_id, q_type)

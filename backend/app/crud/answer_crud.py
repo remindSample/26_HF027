@@ -2,9 +2,20 @@ from sqlalchemy.orm import Session
 from sqlalchemy import extract
 from app.models.answer import Answer
 from app.schemas.answer import AnswerCreate
+from app.services.text_analysis import analyze
 
 
 def create_answer(db: Session, data: AnswerCreate) -> Answer:
+    # 직접 입력 텍스트 또는 OCR 변환 텍스트 분석
+    text_to_analyze = data.content_text or data.ocr_text
+    metrics: dict = {}
+    if text_to_analyze:
+        metrics = analyze(text_to_analyze)
+
+    sentiment = metrics.get("sentiment", {})
+    word_count = metrics.get("word_count", 0)
+    unique_word_count = metrics.get("unique_word_count", 0)
+
     answer = Answer(
         user_id=data.user_id,
         question_id=data.question_id,
@@ -13,6 +24,13 @@ def create_answer(db: Session, data: AnswerCreate) -> Answer:
         image_url=data.image_url,
         ocr_text=data.ocr_text,
         is_private=data.is_private,
+        word_count=word_count or None,
+        sentence_count=metrics.get("sentence_count") or None,
+        avg_sentence_length=metrics.get("avg_sentence_length") or None,
+        unique_word_ratio=metrics.get("unique_word_ratio") or None,
+        repeated_word_count=(word_count - unique_word_count) if word_count else None,
+        positive_score=round(sentiment.get("positive", 0) / 10) or None,
+        negative_score=round(sentiment.get("negative", 0) / 10) or None,
     )
     db.add(answer)
     db.commit()
