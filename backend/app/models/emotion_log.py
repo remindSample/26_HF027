@@ -8,7 +8,7 @@ class EmotionLog(Base):
     __tablename__ = "emotion_log"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    answer_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("answer.id", ondelete="CASCADE"), nullable=False, unique=True)
+    answer_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("answers.id", ondelete="CASCADE"), nullable=False, unique=True)
     dominant_emotion: Mapped[str | None] = mapped_column(String(30), nullable=True)
     depression_risk: Mapped[float | None] = mapped_column(Numeric(5, 4), nullable=True)
     cognitive_decline_risk: Mapped[float | None] = mapped_column(Numeric(5, 4), nullable=True)

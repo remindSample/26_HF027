@@ -5,7 +5,7 @@ from app.database import Base
 
 
 class Answer(Base):
-    __tablename__ = "answer"
+    __tablename__ = "answers"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
