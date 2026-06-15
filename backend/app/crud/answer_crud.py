@@ -1,4 +1,3 @@
-from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
 from app.models.answer import Answer
@@ -7,21 +6,31 @@ from app.services.text_analysis import analyze
 
 
 def create_answer(db: Session, data: AnswerCreate) -> Answer:
-    metrics = analyze(data.answer_text, data.q_type)
+    # 직접 입력 텍스트 또는 OCR 변환 텍스트 분석
+    text_to_analyze = data.content_text or data.ocr_text
+    metrics: dict = {}
+    if text_to_analyze:
+        metrics = analyze(text_to_analyze)
+
+    sentiment = metrics.get("sentiment", {})
+    word_count = metrics.get("word_count", 0)
+    unique_word_count = metrics.get("unique_word_count", 0)
+
     answer = Answer(
         user_id=data.user_id,
         question_id=data.question_id,
-        q_type=data.q_type,
-        question_text=data.question_text,
-        answer_text=data.answer_text,
         input_type=data.input_type,
-        word_count=metrics["word_count"],
-        sentence_count=metrics["sentence_count"],
-        avg_sentence_length=metrics["avg_sentence_length"],
-        unique_word_ratio=metrics["unique_word_ratio"],
-        complexity_score=metrics["complexity_score"],
-        sentiment=metrics["sentiment"],
-        vs_baseline=metrics["vs_baseline"],
+        content_text=data.content_text,
+        image_url=data.image_url,
+        ocr_text=data.ocr_text,
+        is_private=data.is_private,
+        word_count=word_count or None,
+        sentence_count=metrics.get("sentence_count") or None,
+        avg_sentence_length=metrics.get("avg_sentence_length") or None,
+        unique_word_ratio=metrics.get("unique_word_ratio") or None,
+        repeated_word_count=(word_count - unique_word_count) if word_count else None,
+        positive_score=round(sentiment.get("positive", 0) / 10) or None,
+        negative_score=round(sentiment.get("negative", 0) / 10) or None,
     )
     db.add(answer)
     db.commit()
@@ -33,9 +42,9 @@ def get_answers_by_month(
     db: Session, user_id: int | None, year: int, month: int
 ) -> list[Answer]:
     q = db.query(Answer).filter(
-        extract("year", Answer.created_at) == year,
-        extract("month", Answer.created_at) == month,
+        extract("year", Answer.answered_at) == year,
+        extract("month", Answer.answered_at) == month,
     )
     if user_id is not None:
         q = q.filter(Answer.user_id == user_id)
-    return q.order_by(Answer.created_at).all()
+    return q.order_by(Answer.answered_at).all()

@@ -2,7 +2,22 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routers import game_sessions, game_events, answers
+from app.routers import (
+    users,
+    guardian_links,
+    welfare_centers,
+    keywords,
+    questions,
+    answers,
+    answer_favorites,
+    answer_likes,
+    emotion_logs,
+    cognitive_reports,
+    game_sessions,
+    game_events,
+    dataset_answers,
+    notifications,
+)
 
 
 @asynccontextmanager
@@ -20,9 +35,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(users.router)
+app.include_router(guardian_links.router)
+app.include_router(welfare_centers.router)
+app.include_router(keywords.router)
+app.include_router(questions.router)
+app.include_router(answers.router)
+app.include_router(answer_favorites.router)
+app.include_router(answer_likes.router)
+app.include_router(emotion_logs.router)
+app.include_router(cognitive_reports.router)
 app.include_router(game_sessions.router)
 app.include_router(game_events.router)
-app.include_router(answers.router)
+app.include_router(dataset_answers.router)
+app.include_router(notifications.router)
 
 
 @app.get("/")

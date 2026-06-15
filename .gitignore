@@ -1,14 +1,15 @@
 # 가상환경 무시 (점 붙은 폴더명 주의!)
 .venv/
 __pycache__/
+*.pyc
+# 환경변수 (절대 올리면 안됨!)
+.env
 
-# 프론트엔드 관련
+# 프론트엔드
 node_modules/
 .expo/
 
-# 환경변수 (비밀번호 포함 - 절대 올리면 안됨)
-.env
-
-# 기타 설정
+# 기타
 .vscode/
 .DS_Store
+backend/remind_db_v10.sql
