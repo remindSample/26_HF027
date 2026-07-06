@@ -8,6 +8,8 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <Stack>
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="(guardian)" options={{ headerShown: false }} />
         {/* 하단 바가 들어가는 화면 묶음 */}
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
