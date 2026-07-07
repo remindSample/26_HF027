@@ -33,7 +33,7 @@ export default function AnswerMethodScreen() {
             {questionText}
           </Text>
           <Text className="text-[13px] text-[#999999]">
-            나는 네 사용을 즐겨야해요.
+            가볍게 답변해보세요.
           </Text>
         </View>
 

@@ -20,7 +20,7 @@ const COMPLETED_DATES = [1, 2, 3, 5, 7, 8, 10, 11];
 export default function ActivityReportScreen() {
   return (
     <View className="flex-1 bg-[#F0F8FF]">
-      <Header title="건강 리포트" />
+      <Header title="활동 리포트" />
 
       <ScrollView
         className="flex-1"
@@ -162,7 +162,7 @@ export default function ActivityReportScreen() {
             <Text className="text-lg">✏️</Text>
           </View>
           <Text className="text-sm text-[#555555] leading-[22px]">
-            산책을 자주 하 시고, 가족과의 추억을 떠올리셔요.
+            산책을 자주 하시고, 가족과의 추억을 떠올려보세요.
           </Text>
         </View>
       </ScrollView>
