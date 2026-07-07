@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
     phone: str
     email: str | None = None
     password: str
-    role: Literal["elder", "guardian"]
+    role: Literal["USER", "GUARDIAN"]
     birth_date: date | None = None
     profile_url: str | None = None
 

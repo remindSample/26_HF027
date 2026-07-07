@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.routers import (
+    auth,
     users,
     guardian_links,
     welfare_centers,
@@ -35,6 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(guardian_links.router)
 app.include_router(welfare_centers.router)
