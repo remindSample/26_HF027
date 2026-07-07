@@ -12,7 +12,7 @@ class User(Base):
     phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
     email: Mapped[str | None] = mapped_column(String(100), nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[str] = mapped_column(Enum("elder", "guardian"), nullable=False)
+    role: Mapped[str] = mapped_column(Enum("USER", "GUARDIAN"), nullable=False)
     birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     profile_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
