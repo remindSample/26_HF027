@@ -10,6 +10,8 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="login" options={{ headerShown: false }} />
 
+        <Stack.Screen name="signup" options={{ headerShown: false }} />
+
         {/* 보호자 - 하단 바가 들어가는 화면 묶음 */}
         <Stack.Screen name="(guardian)" options={{ headerShown: false }} />
 
