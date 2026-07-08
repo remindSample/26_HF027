@@ -30,6 +30,7 @@ export default function SignupScreen() {
   const [role, setRole] = useState<Role | null>(null);
   const [method, setMethod] = useState<SignupMethod>(null);
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
@@ -65,14 +66,16 @@ export default function SignupScreen() {
   };
 
   const handleSendCode = () => {
+    if (!name.trim()) {
+      Alert.alert("알림", "이름을 입력해주세요.");
+      return;
+    }
+
     if (step === "EMAIL") {
       if (!email.trim()) {
         Alert.alert("알림", "이메일을 입력해주세요.");
         return;
       }
-
-      // TODO: 이메일 형식 검증 / 인증번호 발송 API 연결
-      console.log("이메일 인증번호 발송:", email);
     }
 
     if (step === "PHONE") {
@@ -80,12 +83,9 @@ export default function SignupScreen() {
         Alert.alert("알림", "전화번호를 입력해주세요.");
         return;
       }
-
-      // TODO: 전화번호 형식 검증 / 인증번호 발송 API 연결
-      console.log("전화번호 인증번호 발송:", phone);
     }
 
-    setStep("VERIFY");
+    setStep("PASSWORD");
   };
 
   const handleChangeCode = (text: string, index: number) => {
@@ -135,6 +135,7 @@ export default function SignupScreen() {
     console.log("회원가입 완료:", {
       role,
       method,
+      name,
       email,
       phone,
       password,
@@ -162,75 +163,75 @@ export default function SignupScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       {step === "SELECT_ROLE" ? (
-        <View className="flex-1 bg-white px-[30px] pt-[220px]">
-          <Text className="text-[48px] font-normal text-black">
+        <View className="flex-1 bg-white px-[30px] pt-[80px]">
+          <Text className="text-[28px] font-normal text-black">
             RE:Mind에 어서오세요!
           </Text>
 
-          <View className="mt-[42px] h-[4px] bg-[#8A8A8A]" />
+          <View className="mt-[21px] h-[1px] bg-[#8A8A8A]" />
 
-          <Text className="mt-[58px] text-[40px] leading-[58px] text-black">
+          <Text className="mt-[28px] text-[24px] leading-[29px] text-black">
             당신의 일상을 기록하고,{"\n"}가족과 공유하세요.
           </Text>
 
-          <View className="mt-[240px] gap-[100px]">
+          <View className="mt-[60px] gap-[40px]">
             <Pressable
               onPress={() => handleSelectRole("USER")}
-              className="h-[240px] items-center justify-center rounded-[32px] bg-[#D9D9D9]"
+              className="h-[120px] items-center justify-center rounded-[32px] bg-[#D9D9D9]"
             >
-              <Text className="text-[48px] font-semibold text-[#333333]">
+              <Text className="text-[32px] font-semibold text-[#333333]">
                 사용자로 가입하기
               </Text>
             </Pressable>
 
             <Pressable
               onPress={() => handleSelectRole("GUARDIAN")}
-              className="h-[240px] items-center justify-center rounded-[32px] bg-[#D9D9D9]"
+              className="h-[120px] items-center justify-center rounded-[32px] bg-[#D9D9D9]"
             >
-              <Text className="text-[48px] font-semibold text-[#333333]">
+              <Text className="text-[32px] font-semibold text-[#333333]">
                 보호자로 가입하기
               </Text>
             </Pressable>
           </View>
         </View>
       ) : step === "SELECT_METHOD" ? (
-        <View className="flex-1 bg-white px-[30px] pt-[220px]">
-          <Text className="text-[48px] font-normal text-black">
+        <View className="flex-1 bg-white px-[30px] pt-[80px]">
+          <Text className="text-[28px] font-normal text-black">
             RE:Mind에 어서오세요!
           </Text>
 
-          <View className="mt-[42px] h-[4px] bg-[#8A8A8A]" />
+          <View className="mt-[21px] h-[1px] bg-[#8A8A8A]" />
 
-          <Text className="mt-[58px] text-[40px] leading-[58px] text-black">
+          <Text className="mt-[28px] text-[24px] leading-[29px] text-black">
             당신의 일상을 기록하고,{"\n"}가족과 공유하세요.
           </Text>
 
-          <View className="mt-[300px]">
+          <View className="mt-[60px]">
             <Pressable
               onPress={handleSelectEmail}
-              className="h-[120px] items-center justify-center rounded-[18px] border-[3px] border-[#777777]"
+              className="h-[60px] items-center justify-center rounded-[18px] border-[3px] border-[#777777]"
             >
-              <Text className="text-[40px] font-semibold text-[#333333]">
+              <Text className="text-[24px] font-semibold text-[#333333]">
                 이메일로 가입하기
               </Text>
             </Pressable>
 
             <Pressable
               onPress={handleSelectPhone}
-              className="mt-[52px] h-[120px] items-center justify-center rounded-[18px] border-[3px] border-[#777777]"
+              className="mt-[28px] h-[60px] items-center justify-center rounded-[18px] border-[3px] border-[#777777]"
             >
-              <Text className="text-[40px] font-semibold text-[#333333]">
+              <Text className="text-[24px] font-semibold text-[#333333]">
                 전화번호로 가입하기
               </Text>
             </Pressable>
 
-            <View className="mt-[100px] h-[4px] bg-[#A0A0A0]" />
+            <View className="mt-[60px] h-[1px] bg-[#A0A0A0]" />
 
             <Pressable
               onPress={handleKakaoSignup}
-              className="mt-[100px] h-[120px] items-center justify-center rounded-[18px] bg-[#D9D9D9]"
+              className="mt-[60px] h-[60px] items-center justify-center rounded-[18px] bg-[#D9D9D9]"
             >
-              <Text className="text-[40px] font-semibold text-[#333333]">
+              <Text className="text-[24px] font-semibold text-[#333333]">
                 카카오톡으로 가입하기
               </Text>
             </Pressable>
@@ -238,20 +239,27 @@ export default function SignupScreen() {
         </View>
       ) : step === "EMAIL" || step === "PHONE" ? (
         <View className="flex-1 bg-white px-[30px] pt-[80px]">
-          <Text className="text-[52px] font-light tracking-[-2px] text-black">
+          <Text className="text-[36px] font-light tracking-[-2px] text-black">
             RE:Mind
           </Text>
 
-          <View className="mt-[90px] ml-[60px] h-[250px] w-[250px] border-[3px] border-[#999999]">
-            <View className="absolute left-0 top-0 h-[3px] w-[350px] origin-left rotate-45 bg-[#999999]" />
-            <View className="absolute bottom-0 left-0 h-[3px] w-[350px] origin-left -rotate-45 bg-[#999999]" />
-          </View>
-
-          <Text className="mt-[80px] text-[52px] font-normal text-black">
+          <Text className="mt-[80px] text-[32px] font-normal text-black">
             {methodTitle}
           </Text>
 
           <View className="mt-[130px] h-[98px] flex-row items-center rounded-[12px] border-[3px] border-[#D0D0D0] px-[38px]">
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="이름"
+              placeholderTextColor="#3A3A3A"
+              className="flex-1 text-[34px] text-black"
+            />
+
+            <Ionicons name="checkmark" size={48} color="#222222" />
+          </View>
+
+          <View className="mt-[24px] h-[98px] flex-row items-center rounded-[12px] border-[3px] border-[#D0D0D0] px-[38px]">
             <TextInput
               value={inputValue}
               onChangeText={setInputValue}
@@ -271,7 +279,7 @@ export default function SignupScreen() {
 
           <Pressable
             onPress={handleSendCode}
-            className="mt-[360px] h-[120px] items-center justify-center rounded-[18px] border-[3px] border-[#777777]"
+            className="mt-[240px] h-[120px] items-center justify-center rounded-[18px] border-[3px] border-[#777777]"
           >
             <Text className="text-[40px] font-semibold text-[#333333]">
               다음으로 넘어가기
@@ -280,14 +288,9 @@ export default function SignupScreen() {
         </View>
       ) : step === "VERIFY" ? (
         <View className="flex-1 bg-white px-[30px] pt-[80px]">
-          <Text className="text-[52px] font-light tracking-[-2px] text-black">
+          <Text className="text-[36px] font-light tracking-[-2px] text-black">
             RE:Mind
           </Text>
-
-          <View className="mt-[90px] ml-[85px] h-[250px] w-[250px] border-[3px] border-[#999999]">
-            <View className="absolute left-0 top-0 h-[3px] w-[350px] origin-left rotate-45 bg-[#999999]" />
-            <View className="absolute bottom-0 left-0 h-[3px] w-[350px] origin-left -rotate-45 bg-[#999999]" />
-          </View>
 
           <Text className="mt-[80px] ml-[30px] text-[52px] font-normal text-black">
             인증번호 입력
@@ -324,11 +327,6 @@ export default function SignupScreen() {
           <Text className="text-[52px] font-light tracking-[-2px] text-black">
             RE:Mind
           </Text>
-
-          <View className="mt-[90px] ml-[85px] h-[250px] w-[250px] border-[3px] border-[#999999]">
-            <View className="absolute left-0 top-0 h-[3px] w-[350px] origin-left rotate-45 bg-[#999999]" />
-            <View className="absolute bottom-0 left-0 h-[3px] w-[350px] origin-left -rotate-45 bg-[#999999]" />
-          </View>
 
           <Text className="mt-[80px] text-[52px] font-normal text-black">
             사용할 비밀번호 입력
