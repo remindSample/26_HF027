@@ -1,5 +1,5 @@
-import { Link, router } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Link } from "expo-router";
+import { ScrollView, Text, View, Pressable } from "react-native";
 
 import Header from "@/components/Header";
 
