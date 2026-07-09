@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, TextInput } from "react-native";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TextInput,
+} from "react-native";
 import { router, useNavigation } from "expo-router";
 import type { Role, SignupMethod, SignupStep } from "./types";
 import SelectRoleStep from "./components/1_SelectRoleStep";
@@ -164,8 +170,13 @@ export default function SignupScreen() {
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-white"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
       {step === "SELECT_ROLE" ? (
         <SelectRoleStep onSelectRole={handleSelectRole} />
       ) : step === "SELECT_METHOD" ? (
@@ -209,6 +220,7 @@ export default function SignupScreen() {
       ) : (
         <CompleteStep onGoLogin={handleGoLogin} />
       )}
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

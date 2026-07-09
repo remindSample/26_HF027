@@ -6,6 +6,7 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   Alert,
 } from "react-native";
 import { router } from "expo-router";
@@ -52,8 +53,13 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-white"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
       <View className="flex-1 px-9 pt-20">
         {/* 로고 */}
         <Text className="text-[36px] font-bold tracking-[-2px] text-black">
@@ -138,6 +144,7 @@ export default function LoginScreen() {
         {/* 구분선 */}
         <View className="mt-20 h-[1.5px] bg-black" />
       </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
