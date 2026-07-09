@@ -9,8 +9,8 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
-    email: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True, unique=True)
+    email: Mapped[str | None] = mapped_column(String(100), nullable=True, unique=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(Enum("USER", "GUARDIAN"), nullable=False)
     birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
