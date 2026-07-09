@@ -28,6 +28,7 @@ class QuestionResponse(BaseModel):
     content: str
     q_type: str | None
     source: str
+    model_source: str | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

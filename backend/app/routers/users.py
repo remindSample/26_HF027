@@ -9,8 +9,10 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.post("", response_model=UserResponse, status_code=201)
 def register(data: UserCreate, db: Session = Depends(get_db)):
-    if user_crud.get_user_by_phone(db, data.phone):
+    if data.phone and user_crud.get_user_by_phone(db, data.phone):
         raise HTTPException(status_code=400, detail="Phone already registered")
+    if data.email and user_crud.get_user_by_email(db, data.email):
+        raise HTTPException(status_code=400, detail="Email already registered")
     return user_crud.create_user(db, data)
 
 
