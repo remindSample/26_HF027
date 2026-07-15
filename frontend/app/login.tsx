@@ -11,14 +11,20 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { loginUser } from "../lib/api";
 
 export default function LoginScreen() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const passwordInputRef = useRef<TextInput>(null);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
     if (!id.trim()) {
       Alert.alert("알림", "아이디를 입력해주세요.");
       return;
@@ -29,20 +35,23 @@ export default function LoginScreen() {
       return;
     }
 
-    // TODO: 백엔드 로그인 API 연결 예정
-    const data = {
-      access_token: "test_token",
-      user: {
-        id: 1,
-        name: "테스트 사용자",
-        role: "USER",
-      },
-    };
+    setIsSubmitting(true);
 
-    if (data.user.role === "USER") {
-      router.replace("/(tabs)");
-    } else if (data.user.role === "GUARDIAN") {
-      router.replace("/(guardian)");
+    try {
+      const data = await loginUser({ identifier: id, password });
+
+      if (data.user.role === "USER") {
+        router.replace("/(tabs)");
+      } else if (data.user.role === "GUARDIAN") {
+        router.replace("/(guardian)");
+      }
+    } catch (error) {
+      Alert.alert(
+        "알림",
+        error instanceof Error ? error.message : "로그인에 실패했습니다."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -79,6 +88,7 @@ export default function LoginScreen() {
           placeholderTextColor="#111111"
           autoCapitalize="none"
           returnKeyType="next"
+          editable={!isSubmitting}
           onSubmitEditing={() => passwordInputRef.current?.focus()}
           className="mt-16 h-[64px] rounded-[14px] border-2 border-black px-5 text-[20px] text-black"
         />
@@ -95,6 +105,7 @@ export default function LoginScreen() {
             underlineColorAndroid="transparent"
             autoCapitalize="none"
             returnKeyType="done"
+            editable={!isSubmitting}
             onSubmitEditing={handleLogin}
             className="h-full flex-1 text-[20px] text-black"
           />

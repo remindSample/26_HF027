@@ -5,8 +5,10 @@ import {
   Platform,
   ScrollView,
   TextInput,
+  View,
 } from "react-native";
 import { router, useNavigation } from "expo-router";
+import { signupUser } from "../../lib/api";
 import type { Role, SignupMethod, SignupStep } from "./types";
 import SelectRoleStep from "./components/1_SelectRoleStep";
 import SelectMethodStep from "./components/2_SelectMethodStep";
@@ -14,6 +16,7 @@ import ContactStep from "./components/3_ContactStep";
 import VerifyStep from "./components/4_VerifyStep";
 import PasswordStep from "./components/5_PasswordStep";
 import CompleteStep from "./components/6_CompleteStep";
+import SignupHeader from "./components/SignupHeader";
 
 export default function SignupScreen() {
   const [step, setStep] = useState<SignupStep>("SELECT_ROLE");
@@ -26,7 +29,7 @@ export default function SignupScreen() {
   const [phone, setPhone] = useState("");
 
   const [code, setCode] = useState(["", "", "", "", ""]);
-  const codeRefs = useRef<Array<TextInput | null>>([]);
+  const codeRefs = useRef<(TextInput | null)[]>([]);
 
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -34,6 +37,8 @@ export default function SignupScreen() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isPasswordConfirmVisible, setIsPasswordConfirmVisible] =
     useState(false);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSelectRole = (selectedRole: Role) => {
     setRole(selectedRole);
@@ -111,7 +116,7 @@ export default function SignupScreen() {
     setStep("PASSWORD");
   };
 
-  const handleCompleteSignup = () => {
+  const handleCompleteSignup = async () => {
     if (password.length < 8) {
       Alert.alert("알림", "비밀번호는 최소 8자리 이상 입력해주세요.");
       return;
@@ -122,22 +127,67 @@ export default function SignupScreen() {
       return;
     }
 
-    // TODO: 백엔드 회원가입 API 연결
-    console.log("회원가입 완료:", {
-      role,
-      method,
-      name,
-      email,
-      phone,
-      password,
-    });
+    if (!role) {
+      Alert.alert("알림", "회원 유형을 선택해주세요.");
+      return;
+    }
 
-    setStep("COMPLETE");
+    setIsSubmitting(true);
+
+    try {
+      await signupUser({
+        name,
+        password,
+        role,
+        email: method === "EMAIL" ? email : undefined,
+        phone: method === "PHONE" ? phone : undefined,
+      });
+
+      setStep("COMPLETE");
+    } catch (error) {
+      Alert.alert(
+        "알림",
+        error instanceof Error ? error.message : "회원가입에 실패했습니다."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleGoLogin = () => {
     router.replace("/login");
   };
+
+  const handleBack = () => {
+    switch (step) {
+      case "SELECT_ROLE":
+      case "COMPLETE":
+        router.back();
+        break;
+      case "SELECT_METHOD":
+        setStep("SELECT_ROLE");
+        break;
+      case "EMAIL":
+      case "PHONE":
+        setStep("SELECT_METHOD");
+        break;
+      case "VERIFY":
+      case "PASSWORD":
+        setStep(method === "PHONE" ? "PHONE" : "EMAIL");
+        break;
+    }
+  };
+
+  const isWelcomeStep = step === "SELECT_ROLE" || step === "SELECT_METHOD";
+  const headerTitle = isWelcomeStep ? "RE:Mind에 어서오세요!" : "RE:Mind";
+  const headerTitleClassName =
+    step === "COMPLETE"
+      ? "pl-[4px] text-[52px] font-light tracking-[-2px] text-black"
+      : isWelcomeStep
+        ? "pl-[4px] text-[28px] font-normal text-black"
+        : step === "VERIFY"
+          ? "pl-[4px] text-[36px] font-light tracking-[-2px] text-black"
+          : "pl-[4px] text-[36px] font-bold tracking-[-2px] text-black";
 
   const navigation = useNavigation();
 
@@ -177,6 +227,14 @@ export default function SignupScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <View className="bg-white pt-[40px] px-[12px]">
+          <SignupHeader
+            title={headerTitle}
+            titleClassName={headerTitleClassName}
+            onBack={handleBack}
+          />
+        </View>
+
       {step === "SELECT_ROLE" ? (
         <SelectRoleStep onSelectRole={handleSelectRole} />
       ) : step === "SELECT_METHOD" ? (
@@ -216,6 +274,7 @@ export default function SignupScreen() {
             setIsPasswordConfirmVisible((prev) => !prev)
           }
           onCompleteSignup={handleCompleteSignup}
+          isSubmitting={isSubmitting}
         />
       ) : (
         <CompleteStep onGoLogin={handleGoLogin} />
