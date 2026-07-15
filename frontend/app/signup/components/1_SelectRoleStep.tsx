@@ -7,11 +7,7 @@ type Props = {
 
 export default function SelectRoleStep({ onSelectRole }: Props) {
   return (
-    <View className="flex-1 bg-white px-[30px] pt-[80px]">
-      <Text className="text-[28px] font-normal text-black">
-        RE:Mind에 어서오세요!
-      </Text>
-
+    <View className="flex-1 bg-white px-[30px]">
       <View className="mt-[21px] h-[1px] bg-[#8A8A8A]" />
 
       <Text className="mt-[28px] text-[24px] leading-[29px] text-black">

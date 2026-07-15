@@ -6,11 +6,7 @@ type Props = {
 
 export default function CompleteStep({ onGoLogin }: Props) {
   return (
-    <View className="flex-1 bg-white px-[30px] pt-[80px]">
-      <Text className="text-[52px] font-light tracking-[-2px] text-black">
-        RE:Mind
-      </Text>
-
+    <View className="flex-1 bg-white px-[30px]">
       <Text className="mt-[100px] text-[46px] font-normal text-black">
         환영합니다!
       </Text>

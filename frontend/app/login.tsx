@@ -4,21 +4,30 @@ import {
   Text,
   TextInput,
   Pressable,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
 } from "react-native";
 import { router } from "expo-router";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
+import { loginUser } from "../lib/api";
+import IcChevronDown from "../assets/Icon/Ic_Chevron down.svg";
 
 export default function LoginScreen() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const passwordInputRef = useRef<TextInput>(null);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
     if (!id.trim()) {
       Alert.alert("알림", "아이디를 입력해주세요.");
       return;
@@ -29,20 +38,23 @@ export default function LoginScreen() {
       return;
     }
 
-    // TODO: 백엔드 로그인 API 연결 예정
-    const data = {
-      access_token: "test_token",
-      user: {
-        id: 1,
-        name: "테스트 사용자",
-        role: "USER",
-      },
-    };
+    setIsSubmitting(true);
 
-    if (data.user.role === "USER") {
-      router.replace("/(tabs)");
-    } else if (data.user.role === "GUARDIAN") {
-      router.replace("/(guardian)");
+    try {
+      const data = await loginUser({ identifier: id, password });
+
+      if (data.user.role === "USER") {
+        router.replace("/(tabs)");
+      } else if (data.user.role === "GUARDIAN") {
+        router.replace("/(guardian)");
+      }
+    } catch (error) {
+      Alert.alert(
+        "알림",
+        error instanceof Error ? error.message : "로그인에 실패했습니다."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -61,10 +73,26 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
       >
       <View className="flex-1 px-9 pt-20">
-        {/* 로고 */}
-        <Text className="text-[36px] font-bold tracking-[-2px] text-black">
-          RE:Mind
-        </Text>
+        <View className="flex-row items-center justify-between">
+          {/* 로고 */}
+          <Text className="text-[36px] font-bold tracking-[-2px] text-black">
+            RE:Mind
+          </Text>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="키보드 닫기"
+            hitSlop={10}
+            onPress={Keyboard.dismiss}
+            className="h-[36px] w-[36px] items-center justify-center"
+          >
+            <Image
+              source={IcChevronDown}
+              contentFit="contain"
+              style={{ width: 36, height: 36 }}
+            />
+          </Pressable>
+        </View>
 
         {/* 제목 */}
         <Text className="mt-[60px] text-center text-[30px] text-black">
@@ -79,6 +107,7 @@ export default function LoginScreen() {
           placeholderTextColor="#111111"
           autoCapitalize="none"
           returnKeyType="next"
+          editable={!isSubmitting}
           onSubmitEditing={() => passwordInputRef.current?.focus()}
           className="mt-16 h-[64px] rounded-[14px] border-2 border-black px-5 text-[20px] text-black"
         />
@@ -95,6 +124,7 @@ export default function LoginScreen() {
             underlineColorAndroid="transparent"
             autoCapitalize="none"
             returnKeyType="done"
+            editable={!isSubmitting}
             onSubmitEditing={handleLogin}
             className="h-full flex-1 text-[20px] text-black"
           />
@@ -108,7 +138,7 @@ export default function LoginScreen() {
               size={30}
               color="#222222"
             />
-          </Pressable> 
+          </Pressable>
         </View>
 
         {/* or */}
