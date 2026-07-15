@@ -4,14 +4,17 @@ import {
   Text,
   TextInput,
   Pressable,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
 } from "react-native";
 import { router } from "expo-router";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { loginUser } from "../lib/api";
+import IcChevronDown from "../assets/Icon/Ic_Chevron down.svg";
 
 export default function LoginScreen() {
   const [id, setId] = useState("");
@@ -70,10 +73,26 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
       >
       <View className="flex-1 px-9 pt-20">
-        {/* 로고 */}
-        <Text className="text-[36px] font-bold tracking-[-2px] text-black">
-          RE:Mind
-        </Text>
+        <View className="flex-row items-center justify-between">
+          {/* 로고 */}
+          <Text className="text-[36px] font-bold tracking-[-2px] text-black">
+            RE:Mind
+          </Text>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="키보드 닫기"
+            hitSlop={10}
+            onPress={Keyboard.dismiss}
+            className="h-[36px] w-[36px] items-center justify-center"
+          >
+            <Image
+              source={IcChevronDown}
+              contentFit="contain"
+              style={{ width: 36, height: 36 }}
+            />
+          </Pressable>
+        </View>
 
         {/* 제목 */}
         <Text className="mt-[60px] text-center text-[30px] text-black">
@@ -119,7 +138,7 @@ export default function LoginScreen() {
               size={30}
               color="#222222"
             />
-          </Pressable> 
+          </Pressable>
         </View>
 
         {/* or */}

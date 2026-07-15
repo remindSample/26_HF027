@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -179,6 +180,7 @@ export default function SignupScreen() {
   };
 
   const isWelcomeStep = step === "SELECT_ROLE" || step === "SELECT_METHOD";
+  const hasInput = ["EMAIL", "PHONE", "VERIFY", "PASSWORD"].includes(step);
   const headerTitle = isWelcomeStep ? "RE:Mind에 어서오세요!" : "RE:Mind";
   const headerTitleClassName =
     step === "COMPLETE"
@@ -227,11 +229,13 @@ export default function SignupScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="bg-white pt-[40px] px-[12px]">
+        <View className="bg-white pt-20 px-[12px]">
           <SignupHeader
             title={headerTitle}
             titleClassName={headerTitleClassName}
             onBack={handleBack}
+            showDismissKeyboard={hasInput}
+            onDismissKeyboard={Keyboard.dismiss}
           />
         </View>
 
