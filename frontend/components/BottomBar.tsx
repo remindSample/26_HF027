@@ -7,6 +7,10 @@ export default function BottomBar() {
   const segments = useSegments();
   const reportHref: Href =
     segments[0] === "(guardian)" ? "/(guardian)/report" : "/(user)/report";
+  const albumHref: Href =
+    segments[0] === "(guardian)"
+      ? "/(guardian)/memory/list"
+      : "/(user)/memory/list";
 
   return (
     <View
@@ -29,11 +33,13 @@ export default function BottomBar() {
         </Pressable>
       </Link>
 
-      <Pressable className="h-[70px] flex-1 items-center justify-center">
-        <Text className="text-center text-[28px] font-bold text-[#CFCFCF]">
-          앨범
-        </Text>
-      </Pressable>
+      <Link href={albumHref} asChild>
+        <Pressable className="h-[70px] flex-1 items-center justify-center">
+          <Text className="text-center text-[28px] font-bold text-[#CFCFCF]">
+            앨범
+          </Text>
+        </Pressable>
+      </Link>
     </View>
   );
 }
