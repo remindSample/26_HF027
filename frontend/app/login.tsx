@@ -44,7 +44,7 @@ export default function LoginScreen() {
       const data = await loginUser({ identifier: id, password });
 
       if (data.user.role === "USER") {
-        router.replace("/(tabs)");
+        router.replace("/(user)");
       } else if (data.user.role === "GUARDIAN") {
         router.replace("/(guardian)");
       }
