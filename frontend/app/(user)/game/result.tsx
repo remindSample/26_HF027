@@ -94,7 +94,7 @@ export default function ResultScreen() {
           </View>
           <TouchableOpacity
             className="h-14 bg-[#C8C8C8] rounded-2xl items-center justify-center"
-            onPress={() => router.replace('/(tabs)')}
+            onPress={() => router.replace('/(user)')}
           >
             <Text className="text-[17px] font-semibold text-[#3C3C3C]">홈으로</Text>
           </TouchableOpacity>

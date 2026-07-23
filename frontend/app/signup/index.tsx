@@ -9,7 +9,6 @@ import {
   View,
 } from "react-native";
 import { router, useNavigation } from "expo-router";
-import { signupUser } from "../../lib/api";
 import type { Role, SignupMethod, SignupStep } from "./types";
 import SelectRoleStep from "./components/1_SelectRoleStep";
 import SelectMethodStep from "./components/2_SelectMethodStep";
@@ -39,7 +38,7 @@ export default function SignupScreen() {
   const [isPasswordConfirmVisible, setIsPasswordConfirmVisible] =
     useState(false);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmitting = false;
 
   const handleSelectRole = (selectedRole: Role) => {
     setRole(selectedRole);
@@ -117,7 +116,7 @@ export default function SignupScreen() {
     setStep("PASSWORD");
   };
 
-  const handleCompleteSignup = async () => {
+  const handleCompleteSignup = () => {
     if (password.length < 8) {
       Alert.alert("알림", "비밀번호는 최소 8자리 이상 입력해주세요.");
       return;
@@ -133,29 +132,20 @@ export default function SignupScreen() {
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      await signupUser({
-        name,
-        password,
-        role,
-        email: method === "EMAIL" ? email : undefined,
-        phone: method === "PHONE" ? phone : undefined,
-      });
-
-      setStep("COMPLETE");
-    } catch (error) {
-      Alert.alert(
-        "알림",
-        error instanceof Error ? error.message : "회원가입에 실패했습니다."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    setStep("COMPLETE");
   };
 
-  const handleGoLogin = () => {
+  const handleGoHome = () => {
+    if (role === "USER") {
+      router.replace("/(user)");
+      return;
+    }
+
+    if (role === "GUARDIAN") {
+      router.replace("/(guardian)");
+      return;
+    }
+
     router.replace("/login");
   };
 
@@ -281,7 +271,7 @@ export default function SignupScreen() {
           isSubmitting={isSubmitting}
         />
       ) : (
-        <CompleteStep onGoLogin={handleGoLogin} />
+        <CompleteStep onGoHome={handleGoHome} />
       )}
       </ScrollView>
     </KeyboardAvoidingView>
