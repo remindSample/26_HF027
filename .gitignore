@@ -13,3 +13,5 @@ node_modules/
 .vscode/
 .DS_Store
 backend/remind_db_v10.sql
+survey_answers_modify.xlsx
+backend/import_survey_answers.py

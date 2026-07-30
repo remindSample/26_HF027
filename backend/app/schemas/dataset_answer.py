@@ -4,14 +4,12 @@ from pydantic import BaseModel
 
 
 class DatasetAnswerCreate(BaseModel):
-    welfare_center_id: int
     question_id: int | None = None
-    user_id: int | None = None
+    respondent_id: str | None = None
     is_real: bool = False
     user_group: str | None = None
     age: int | None = None
     age_group: Literal["young_adult", "middle_adult", "elderly", "old_elderly"] | None = None
-    gender: Literal["M", "F"] | None = None
     image_url: str | None = None
     ocr_text: str | None = None
     raw_answer: str | None = None
@@ -26,14 +24,12 @@ class DatasetAnswerCreate(BaseModel):
 
 class DatasetAnswerResponse(BaseModel):
     id: int
-    welfare_center_id: int
     question_id: int | None
-    user_id: int | None
+    respondent_id: str | None
     is_real: bool
     user_group: str | None
     age: int | None
     age_group: str | None
-    gender: str | None
     image_url: str | None
     ocr_text: str | None
     raw_answer: str | None

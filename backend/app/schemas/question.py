@@ -12,7 +12,6 @@ Q_TYPE = Literal[
 class QuestionCreate(BaseModel):
     created_by: int | None = None
     target_user_id: int | None = None
-    welfare_center_id: int | None = None
     keyword_id: int | None = None
     content: str
     q_type: Q_TYPE | None = None
@@ -23,7 +22,6 @@ class QuestionResponse(BaseModel):
     id: int
     created_by: int | None
     target_user_id: int | None
-    welfare_center_id: int | None
     keyword_id: int | None
     content: str
     q_type: str | None

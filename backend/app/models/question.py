@@ -10,7 +10,6 @@ class Question(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     created_by: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     target_user_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
-    welfare_center_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("welfare_center.id", ondelete="SET NULL"), nullable=True)
     keyword_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("keyword.id", ondelete="SET NULL"), nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     q_type: Mapped[str | None] = mapped_column(

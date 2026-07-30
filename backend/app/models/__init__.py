@@ -1,6 +1,5 @@
 from .user import User
 from .guardian_link import GuardianLink
-from .welfare_center import WelfareCenter
 from .keyword import Keyword
 from .question import Question
 from .answer import Answer
