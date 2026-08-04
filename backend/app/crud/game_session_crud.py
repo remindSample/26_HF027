@@ -23,7 +23,6 @@ def finish_session(
     total_count: int,
 ) -> GameSession:
     accuracy = round(success_count / total_count * 100, 1) if total_count > 0 else 0.0
-    # 레벨 배율 적용: 레벨이 높을수록 점수 가중치
     score_per_success = 10 * session.level
     total_score = success_count * score_per_success
 

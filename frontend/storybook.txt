@@ -1,0 +1,11 @@
+## guardian/components/header.txt
+py-5로 적용
+헤더 알맹이: 48px
+전체 높이 88px (컴포넌트 가져다 쓰는 곳에서 py-5로 하면)
+
+<View className="px-[12px] py-5">
+  <Header
+    title="질문 수정"
+    showSettingButton={true}
+  />
+</View>
