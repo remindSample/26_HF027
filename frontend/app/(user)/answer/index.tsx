@@ -9,7 +9,7 @@ export default function AnswerMethodScreen() {
     questionText: string;
   }>();
 
-  const goTo = (method: string) => {
+  const goTo = (method:"camera"|"gallery"|"write") => {
     router.push({
       pathname: `/answer/${method}`,
       params: { questionId, qType, questionText },
