@@ -1,19 +1,46 @@
 import Header from "@/components/Header";
-import { router, useLocalSearchParams } from "expo-router";
+import { submitAnswer as submitAnswerToApi } from "@/lib/api";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
 
 export default function WriteAnswerScreen() {
-  const { questionText } = useLocalSearchParams<{ questionText?: string }>();
+  const { questionId, questionText } = useLocalSearchParams<{
+    questionId?: string;
+    questionText?: string;
+  }>();
   const [draft, setDraft] = useState("");
   const [answerText, setAnswerText] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitAnswer = (text: string) => {
+  const submitAnswer = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    setAnswerText(trimmed);
-    setDraft("");
+    const parsedQuestionId = Number(questionId);
+    if (!Number.isFinite(parsedQuestionId)) {
+      Alert.alert("알림", "질문 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const answer = await submitAnswerToApi({
+        question_id: parsedQuestionId,
+        input_type: "text",
+        content_text: trimmed,
+      });
+
+      setAnswerText(answer.content_text ?? trimmed);
+      setDraft("");
+    } catch (error) {
+      Alert.alert(
+        "알림",
+        error instanceof Error ? error.message : "답변 저장에 실패했습니다."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -40,10 +67,15 @@ export default function WriteAnswerScreen() {
           />
 
           <Pressable
-            className="h-12 rounded-xl bg-[#5BA4A4] items-center justify-center"
+            className={`h-12 rounded-xl items-center justify-center ${
+              isSubmitting ? "bg-[#9BCBCB]" : "bg-[#5BA4A4]"
+            }`}
             onPress={() => submitAnswer(draft)}
+            disabled={isSubmitting}
           >
-            <Text className="text-white font-semibold">저장하기</Text>
+            <Text className="text-white font-semibold">
+              {isSubmitting ? "저장 중..." : "저장하기"}
+            </Text>
           </Pressable>
         </View>
 
