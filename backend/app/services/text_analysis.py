@@ -1,6 +1,7 @@
 import re
 import csv
 import os
+from collections import defaultdict
 from pathlib import Path
 
 BASELINE_PATH = Path(__file__).parent.parent / "data" / "baseline.csv"
@@ -21,15 +22,12 @@ def _load_baseline() -> dict:
     if not BASELINE_PATH.exists():
         return {}
 
-    records: dict[str, list] = {}
+    records: dict[str, list] = defaultdict(list)
     with open(BASELINE_PATH, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            q_type = row["Q_type"]
-            if q_type not in records:
-                records[q_type] = []
             try:
-                records[q_type].append({
+                records[row["Q_type"]].append({
                     "word_count": int(row["word_count"]),
                     "sentence_count": int(row["sentence_count"]),
                     "avg_sentence_length": float(row["avg_sentence_length"]),
@@ -37,23 +35,17 @@ def _load_baseline() -> dict:
             except (ValueError, KeyError):
                 continue
 
-    averages: dict[str, dict] = {}
-    for q_type, rows in records.items():
+    def _avg(rows: list[dict]) -> dict:
         n = len(rows)
-        averages[q_type] = {
+        return {
             "word_count": round(sum(r["word_count"] for r in rows) / n, 1),
             "sentence_count": round(sum(r["sentence_count"] for r in rows) / n, 1),
             "avg_sentence_length": round(sum(r["avg_sentence_length"] for r in rows) / n, 2),
         }
 
+    averages = {q_type: _avg(rows) for q_type, rows in records.items()}
     # 전체 평균 (q_type 없을 때 fallback)
-    all_rows = [r for rows in records.values() for r in rows]
-    n_all = len(all_rows)
-    averages["_overall"] = {
-        "word_count": round(sum(r["word_count"] for r in all_rows) / n_all, 1),
-        "sentence_count": round(sum(r["sentence_count"] for r in all_rows) / n_all, 1),
-        "avg_sentence_length": round(sum(r["avg_sentence_length"] for r in all_rows) / n_all, 2),
-    }
+    averages["_overall"] = _avg([r for rows in records.values() for r in rows])
     return averages
 
 
