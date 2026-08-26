@@ -11,6 +11,7 @@ type Props = {
   isPasswordConfirmVisible: boolean;
   onToggleIsPasswordConfirmVisible: () => void;
   onCompleteSignup: () => void;
+  isSubmitting?: boolean;
 };
 
 export default function PasswordStep({
@@ -23,13 +24,10 @@ export default function PasswordStep({
   isPasswordConfirmVisible,
   onToggleIsPasswordConfirmVisible,
   onCompleteSignup,
+  isSubmitting,
 }: Props) {
   return (
-    <View className="flex-1 bg-white px-[30px] pt-[80px]">
-     <Text className="text-[36px] font-bold tracking-[-2px] text-black">
-        RE:Mind
-    </Text>
-
+    <View className="flex-1 bg-white px-[30px]">
       <Text className="mt-[60px] text-center text-[30px] text-black">
         사용할 비밀번호 입력
       </Text>
@@ -77,10 +75,11 @@ export default function PasswordStep({
 
       <Pressable
         onPress={onCompleteSignup}
-        className="mt-[132px] h-[60px] items-center justify-center rounded-[18px] border-[3px] border-[#777777]"
+        disabled={isSubmitting}
+        className="mt-[132px] h-[60px] items-center justify-center rounded-[18px] border-[3px] border-[#777777] disabled:opacity-50"
       >
         <Text className="text-[24px] font-semibold text-[#333333]">
-          회원가입 완료
+          {isSubmitting ? "처리 중..." : "회원가입 완료"}
         </Text>
       </Pressable>
     </View>

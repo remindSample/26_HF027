@@ -16,7 +16,7 @@ export default function RootLayout() {
         <Stack.Screen name="(guardian)" options={{ headerShown: false }} />
 
         {/* 사용자 - 하단 바가 들어가는 화면 묶음 */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(user)" options={{ headerShown: false }} />
 
         {/* 게임 내부에서 헤더를 관리하므로 숨김 */}
         <Stack.Screen name="game" options={{ headerShown: false }} />

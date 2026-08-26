@@ -15,3 +15,4 @@ node_modules/
 backend/remind_db_v10.sql
 survey_answers_modify.xlsx
 backend/import_survey_answers.py
+backend/server_run.log

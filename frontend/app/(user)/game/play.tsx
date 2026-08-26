@@ -7,12 +7,15 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { finishGameSession, saveGameEvent, startGameSession } from '@/lib/api'
 import FeedbackModal, { FeedbackType } from './components/FeedbackModal'
 import GameHeader from './components/GameHeader'
 import GameScoreBar from './components/GameScoreBar'
 
 type GestureType = 'paper' | 'rock'
 type Lane = 'left' | 'right'
+type Hand = 'LEFT' | 'RIGHT'
+type Gesture = 'FIST' | 'PALM'
 type LaneResult = 'correct' | 'wrong' | 'pending'
 
 interface Note {
@@ -65,6 +68,8 @@ export default function GamePlayScreen() {
   const totalPairsSpawnedRef = useRef(0)
   const navigatedRef = useRef(false)
   const hasStartedRef = useRef(false)
+  const sessionIdRef = useRef<number | null>(null)
+  const sessionFinishedRef = useRef(false)
 
   // 결과 화면 전달용 통계
   const scoreRef = useRef(0)
@@ -77,22 +82,60 @@ export default function GamePlayScreen() {
   useEffect(() => {
     if (gameOver && notes.length === 0 && !navigatedRef.current) {
       navigatedRef.current = true
-      const accuracy =
-        totalPairsRef.current > 0
-          ? Math.round((correctPairsRef.current / totalPairsRef.current) * 100)
-          : 0
-      router.replace({
-        pathname: '/game/result',
-        params: {
-          score: String(scoreRef.current),
-          level: level ?? '1',
-          accuracy: String(accuracy),
-          maxCombo: String(maxComboRef.current),
-          exerciseCount: String(exerciseCountRef.current),
-        },
-      })
+
+      async function finishAndNavigate() {
+        const accuracy =
+          totalPairsRef.current > 0
+            ? Math.round((correctPairsRef.current / totalPairsRef.current) * 100)
+            : 0
+
+        if (sessionIdRef.current && !sessionFinishedRef.current) {
+          sessionFinishedRef.current = true
+          try {
+            await finishGameSession(
+              sessionIdRef.current,
+              correctPairsRef.current,
+              totalPairsRef.current
+            )
+          } catch {
+            sessionFinishedRef.current = false
+          }
+        }
+
+        router.replace({
+          pathname: '/game/result',
+          params: {
+            score: String(scoreRef.current),
+            level: level ?? '1',
+            accuracy: String(accuracy),
+            maxCombo: String(maxComboRef.current),
+            exerciseCount: String(exerciseCountRef.current),
+          },
+        })
+      }
+
+      finishAndNavigate()
     }
   }, [gameOver, notes.length, level])
+
+  useEffect(() => {
+    const numericLevel = Number(level ?? '1')
+    if (!Number.isFinite(numericLevel)) return
+
+    let isMounted = true
+
+    startGameSession(numericLevel)
+      .then(session => {
+        if (isMounted) sessionIdRef.current = session.id
+      })
+      .catch(() => {
+        if (isMounted) sessionIdRef.current = null
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [level])
 
   const triggerFeedback = useCallback((type: FeedbackType) => {
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current)
@@ -133,6 +176,28 @@ export default function GamePlayScreen() {
     }
   }, [triggerFeedback])
 
+  const recordGameEvent = useCallback((
+    note: Note,
+    userGesture: GestureType | null,
+    isCorrect: boolean
+  ) => {
+    if (!sessionIdRef.current) return
+
+    saveGameEvent({
+      session_id: sessionIdRef.current,
+      hand_side: note.lane === 'left' ? 'LEFT' : 'RIGHT',
+      target_gesture: note.type === 'rock' ? 'FIST' : 'PALM',
+      user_input: userGesture
+        ? userGesture === 'rock'
+          ? 'FIST'
+          : 'PALM'
+        : null,
+      is_correct: isCorrect,
+    }).catch(() => {
+      // 게임 진행은 로컬 판정을 우선한다.
+    })
+  }, [])
+
   const spawnNote = useCallback((lane: Lane, pairId: string) => {
     const colH = columnHeightRef.current
     if (colH === 0) return
@@ -161,10 +226,11 @@ export default function GamePlayScreen() {
         const after = notesRef.current.filter(n => n.id !== note.id)
         notesRef.current = after
         if (!isUnmountedRef.current) setNotes([...after])
+        recordGameEvent(note, null, false)
         resolveLane(note.pairId, note.lane, 'wrong')
       }
     })
-  }, [resolveLane])
+  }, [recordGameEvent, resolveLane])
 
   const spawnPair = useCallback(() => {
     const colH = columnHeightRef.current
@@ -252,8 +318,17 @@ export default function GamePlayScreen() {
 
     exerciseCountRef.current += 1
     setExerciseCount(exerciseCountRef.current)
-    resolveLane(bottommost.pairId, lane, bottommost.type === gesture ? 'correct' : 'wrong')
-  }, [resolveLane])
+    const isCorrect = bottommost.type === gesture
+    recordGameEvent(bottommost, gesture, isCorrect)
+    resolveLane(bottommost.pairId, lane, isCorrect ? 'correct' : 'wrong')
+  }, [recordGameEvent, resolveLane])
+
+  const handleInput = useCallback((hand: Hand, gesture: Gesture) => {
+    const lane: Lane = hand === 'LEFT' ? 'left' : 'right'
+    const gameGesture: GestureType = gesture === 'FIST' ? 'rock' : 'paper'
+
+    handleGesture(lane, gameGesture)
+  }, [handleGesture])
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-[#535353]">
@@ -330,13 +405,13 @@ export default function GamePlayScreen() {
           <View className="flex-1 flex-row gap-2">
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleGesture('left', 'rock')}
+              onPress={() => handleInput('LEFT', 'FIST')}
             >
               <Text className="text-[28px]">✊</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleGesture('left', 'paper')}
+              onPress={() => handleInput('LEFT', 'PALM')}
             >
               <Text className="text-[28px]">🖐️</Text>
             </TouchableOpacity>
@@ -345,13 +420,13 @@ export default function GamePlayScreen() {
           <View className="flex-1 flex-row gap-2">
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleGesture('right', 'rock')}
+              onPress={() => handleInput('RIGHT', 'FIST')}
             >
               <Text className="text-[28px]">✊</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-1 h-14 bg-[#7A8894] rounded-xl items-center justify-center"
-              onPress={() => handleGesture('right', 'paper')}
+              onPress={() => handleInput('RIGHT', 'PALM')}
             >
               <Text className="text-[28px]">🖐️</Text>
             </TouchableOpacity>

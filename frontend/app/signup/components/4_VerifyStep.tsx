@@ -3,7 +3,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 
 type Props = {
   code: string[];
-  codeRefs: MutableRefObject<Array<TextInput | null>>;
+  codeRefs: MutableRefObject<(TextInput | null)[]>;
   onChangeCode: (text: string, index: number) => void;
   onVerify: () => void;
 };
@@ -15,11 +15,7 @@ export default function VerifyStep({
   onVerify,
 }: Props) {
   return (
-    <View className="flex-1 bg-white px-[30px] pt-[80px]">
-      <Text className="text-[36px] font-light tracking-[-2px] text-black">
-        RE:Mind
-      </Text>
-
+    <View className="flex-1 bg-white px-[30px]">
       <Text className="mt-[80px] ml-[30px] text-[52px] font-normal text-black">
         인증번호 입력
       </Text>

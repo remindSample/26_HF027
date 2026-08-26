@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import { router, useLocalSearchParams } from "expo-router";
+import { type Href, router, useLocalSearchParams } from "expo-router";
 import { Pressable, Text, View } from "react-native";
  
 export default function AnswerMethodScreen() {
@@ -9,11 +9,11 @@ export default function AnswerMethodScreen() {
     questionText: string;
   }>();
 
-  const goTo = (method: string) => {
+  const goTo = (method: "camera" | "gallery" | "write") => {
     router.push({
       pathname: `/answer/${method}`,
       params: { questionId, qType, questionText },
-    });
+    } as Href);
   };
 
   return (
