@@ -13,7 +13,7 @@ import {
 import { router } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { loginUser } from "../lib/api";
+import { loginUser, setAuthSession } from "../apis";
 import IcChevronDown from "../assets/Icon/Ic_Chevron down.svg";
 
 export default function LoginScreen() {
@@ -42,6 +42,7 @@ export default function LoginScreen() {
 
     try {
       const data = await loginUser({ identifier: id, password });
+      setAuthSession(data);
 
       if (data.user.role === "USER") {
         router.replace("/(user)");

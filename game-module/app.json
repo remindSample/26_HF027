@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "ReMind Game Module",
+    "slug": "remind-game-module",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "remind-game-module",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "Smart glove connection requires Bluetooth.",
+        "NSBluetoothPeripheralUsageDescription": "Smart glove connection requires Bluetooth."
+      }
+    },
+    "android": {
+      "package": "com.remind.gamemodule",
+      "permissions": [
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_SCAN",
+        "BLUETOOTH_CONNECT",
+        "ACCESS_FINE_LOCATION",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT"
+      ],
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "bluetoothAlwaysPermission": "Smart glove connection requires Bluetooth."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e9b83ec1-3e9e-43ea-948e-62974b1a3190"
+      }
+    }
+  }
+}
