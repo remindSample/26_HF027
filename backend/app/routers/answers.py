@@ -1,9 +1,14 @@
+import base64
+import os
 from datetime import datetime
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from openai import OpenAI
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.answer import AnswerCreate, AnswerResponse, MonthlyAnswerReport
 from app.crud.answer_crud import create_answer, get_answers_by_month
+from app.crud.question_crud import get as get_question
+from app.routers.auth import get_current_user
 
 COMMENT_TEMPLATES = [
     "{name}님의 이번 달 답변은 평균보다 단어 수가 {word_diff}개 {word_dir}습니다. 꾸준한 활동이 도움이 되고 있어요!",
@@ -17,6 +22,60 @@ router = APIRouter(prefix="/answers", tags=["answers"])
 @router.post("", response_model=AnswerResponse, status_code=201)
 def submit_answer(data: AnswerCreate, db: Session = Depends(get_db)):
     return create_answer(db, data)
+
+
+@router.post("/upload-image", response_model=AnswerResponse, status_code=201)
+async def upload_image_answer(
+    image: UploadFile = File(...),
+    question_id: int = Form(...),
+    is_private: bool = Form(False),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if not get_question(db, question_id):
+        raise HTTPException(status_code=404, detail="존재하지 않는 질문입니다.")
+
+    image_bytes = await image.read()
+    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+    content_type = image.content_type or "image/jpeg"
+
+    try:
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{content_type};base64,{image_b64}"},
+                        },
+                        {
+                            "type": "text",
+                            "text": "이 이미지 속 손글씨 텍스트를 그대로 추출해서 반환해주세요. 다른 설명이나 마크다운 없이 텍스트만 출력하세요.",
+                        },
+                    ],
+                }
+            ],
+            max_tokens=1000,
+        )
+        ocr_text = response.choices[0].message.content.strip()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OCR 처리 중 오류가 발생했습니다: {str(e)}")
+
+    return create_answer(
+        db,
+        AnswerCreate(
+            user_id=current_user.id,
+            question_id=question_id,
+            input_type="handwriting",
+            ocr_text=ocr_text,
+            content_text=None,
+            image_url=None,
+            is_private=is_private,
+        ),
+    )
 
 
 @router.get("/report", response_model=MonthlyAnswerReport)

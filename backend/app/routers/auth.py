@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
-from jose import jwt
+from jose import jwt, JWTError
 from pydantic import BaseModel
 from app.database import get_db
 from app.schemas.user import UserCreate, UserResponse
@@ -9,6 +10,22 @@ from app.crud import user_crud
 import os
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+_bearer = HTTPBearer()
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+    db: Session = Depends(get_db),
+):
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = int(payload["sub"])
+    except (JWTError, ValueError, TypeError):
+        raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
+    user = user_crud.get_user(db, user_id)
+    if not user:
+        raise HTTPException(status_code=401, detail="존재하지 않는 사용자입니다.")
+    return user
 
 SECRET_KEY = os.getenv("SECRET_KEY", "remind-secret-key")
 ALGORITHM = "HS256"
