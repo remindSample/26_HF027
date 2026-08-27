@@ -4,12 +4,12 @@ export type UserRole = "USER" | "GUARDIAN";
 
 export type CreateUserPayload = {
   name: string;
-  phone: string;
-  email: string;
+  phone?: string;
+  email?: string;
   password: string;
   role: UserRole;
-  birth_date: string;
-  profile_url: string;
+  birth_date?: string;
+  profile_url?: string;
 };
 
 export type UserResponse = {
@@ -24,7 +24,7 @@ export type UserResponse = {
 };
 
 export function createUser(payload: CreateUserPayload): Promise<UserResponse> {
-  return apiRequest<UserResponse>("/users", {
+  return apiRequest<UserResponse>("/auth/register", {
     method: "POST",
     defaultErrorMessage: "회원가입에 실패했습니다.",
     body: JSON.stringify(payload),

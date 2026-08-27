@@ -18,7 +18,7 @@ import PasswordStep from "./components/5_PasswordStep";
 import BirthDateStep from "./components/6_BirthDateStep";
 import CompleteStep from "./components/6_CompleteStep";
 import SignupHeader from "./components/SignupHeader";
-import { setCurrentUserId, signupUser } from "../../lib/api";
+import { setCurrentUserId, signupUser } from "@/apis";
 
 export default function SignupScreen() {
   const [step, setStep] = useState<SignupStep>("SELECT_ROLE");
@@ -187,6 +187,7 @@ export default function SignupScreen() {
         name: name.trim(),
         password,
         role,
+        birth_date: birthDate,
         phone: method === "PHONE" ? phone.trim() : undefined,
         email: method === "EMAIL" ? email.trim() : undefined,
       });

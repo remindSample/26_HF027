@@ -1,11 +1,11 @@
-  export const API_BASE_URL = "http://65.0.99.246:8000";
+export const API_BASE_URL = "http://65.0.99.246:8000";
 
-  type RequestOptions = RequestInit & {
+type RequestOptions = RequestInit & {
     authToken?: string;
     defaultErrorMessage?: string;
   };
 
-  async function parseResponse(response: Response) {
+async function parseResponse(response: Response) {
     const text = await response.text();
 
     if (!text) {
@@ -19,7 +19,7 @@
     }
   }
 
-  export async function apiRequest<T>(
+export async function apiRequest<T>(
     path: string,
     {
       authToken,
