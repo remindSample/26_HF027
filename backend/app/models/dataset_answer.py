@@ -8,14 +8,12 @@ class DatasetAnswer(Base):
     __tablename__ = "dataset_answer"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    welfare_center_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("welfare_center.id", ondelete="CASCADE"), nullable=False)
     question_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("question.id", ondelete="SET NULL"), nullable=True)
-    user_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    respondent_id: Mapped[str | None] = mapped_column(String(20), nullable=True)
     is_real: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     user_group: Mapped[str | None] = mapped_column(String(50), nullable=True)
     age: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     age_group: Mapped[str | None] = mapped_column(Enum("young_adult", "middle_adult", "elderly", "old_elderly"), nullable=True)
-    gender: Mapped[str | None] = mapped_column(Enum("M", "F"), nullable=True)
     image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     ocr_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_answer: Mapped[str | None] = mapped_column(Text, nullable=True)

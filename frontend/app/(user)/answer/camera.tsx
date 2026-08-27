@@ -1,20 +1,46 @@
-﻿import Header from "@/components/Header";
+import Header from "@/components/Header";
+import { submitAnswer as submitAnswerToApi } from "@/lib/api";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Alert, Image, Pressable, Text, View } from "react-native";
 
 type CameraRef = React.ElementRef<typeof CameraView>;
 
 export default function CameraAnswerScreen() {
-  const { questionText } = useLocalSearchParams<{ questionText?: string }>();
+  const { questionId, questionText } = useLocalSearchParams<{
+    questionId?: string;
+    questionText?: string;
+  }>();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraRef>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isTakingPicture, setIsTakingPicture] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitAnswer = (nextImageUri: string) => {
+  const submitAnswer = async (nextImageUri: string) => {
+    const parsedQuestionId = Number(questionId);
+    if (!Number.isFinite(parsedQuestionId)) {
+      Alert.alert("알림", "질문 정보를 찾을 수 없습니다.");
+      return;
+    }
+
     setImageUri(nextImageUri);
+    setIsSubmitting(true);
+    try {
+      await submitAnswerToApi({
+        question_id: parsedQuestionId,
+        input_type: "handwriting",
+        image_url: nextImageUri,
+      });
+    } catch (error) {
+      Alert.alert(
+        "알림",
+        error instanceof Error ? error.message : "촬영 답변 저장에 실패했습니다."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const takePicture = async () => {
@@ -85,6 +111,9 @@ export default function CameraAnswerScreen() {
           <View className="bg-white rounded-[14px] p-4 gap-3" style={{ elevation: 1 }}>
             <Text className="text-[14px] text-[#333333] font-semibold">촬영된 이미지</Text>
             <Image source={{ uri: imageUri }} className="w-full h-48 rounded-xl bg-[#E8E8E8]" />
+            <Text className="text-[12px] text-[#5BA4A4]">
+              {isSubmitting ? "서버에 저장 중..." : "서버 저장 요청 완료"}
+            </Text>
             <Text className="text-[12px] text-[#777777]" numberOfLines={1}>
               {imageUri}
             </Text>

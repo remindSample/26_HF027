@@ -6,7 +6,6 @@ from app.routers import (
     auth,
     users,
     guardian_links,
-    welfare_centers,
     keywords,
     questions,
     answers,
@@ -39,7 +38,6 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(guardian_links.router)
-app.include_router(welfare_centers.router)
 app.include_router(keywords.router)
 app.include_router(questions.router)
 app.include_router(answers.router)

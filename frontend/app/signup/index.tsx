@@ -18,6 +18,7 @@ import PasswordStep from "./components/5_PasswordStep";
 import BirthDateStep from "./components/6_BirthDateStep";
 import CompleteStep from "./components/6_CompleteStep";
 import SignupHeader from "./components/SignupHeader";
+import { setCurrentUserId, signupUser } from "../../lib/api";
 
 export default function SignupScreen() {
   const [step, setStep] = useState<SignupStep>("SELECT_ROLE");
@@ -40,7 +41,7 @@ export default function SignupScreen() {
   const [isPasswordConfirmVisible, setIsPasswordConfirmVisible] =
     useState(false);
 
-  const isSubmitting = false;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSelectRole = (selectedRole: Role) => {
     setRole(selectedRole);
@@ -118,7 +119,11 @@ export default function SignupScreen() {
     setStep("PASSWORD");
   };
 
-  const handleCompletePassword = () => {
+  const handleCompletePassword = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
     if (password.length < 8) {
       Alert.alert("알림", "비밀번호는 최소 8자리 이상 입력해주세요.");
       return;
@@ -146,7 +151,12 @@ export default function SignupScreen() {
     setBirthDate([year, month, day].filter(Boolean).join("-"));
   };
 
-  const handleCompleteSignup = () => {
+  const handleCompleteSignup = async () => {
+    if (!role) {
+      Alert.alert("?뚮┝", "?뚯썝 ?좏삎???좏깮?댁＜?몄슂.");
+      return;
+    }
+
     const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
     if (!datePattern.test(birthDate)) {
@@ -171,7 +181,26 @@ export default function SignupScreen() {
       return;
     }
 
-    setStep("COMPLETE");
+    setIsSubmitting(true);
+    try {
+      const user = await signupUser({
+        name: name.trim(),
+        password,
+        role,
+        phone: method === "PHONE" ? phone.trim() : undefined,
+        email: method === "EMAIL" ? email.trim() : undefined,
+      });
+
+      setCurrentUserId(user.id);
+      setStep("COMPLETE");
+    } catch (error) {
+      Alert.alert(
+        "알림",
+        error instanceof Error ? error.message : "회원가입에 실패했습니다."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleGoHome = () => {

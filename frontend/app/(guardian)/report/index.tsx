@@ -66,7 +66,6 @@ export default function ReportMainScreen() {
           </Pressable>
         </Link>
       </ScrollView>
-
     </View>
   );
 }
