@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { finishGameSession, saveGameEvent, startGameSession } from '@/lib/api'
+import { finishGameSession, saveGameEvent, startGameSession } from '@/apis'
 import FeedbackModal, { FeedbackType } from './components/FeedbackModal'
 import GameHeader from './components/GameHeader'
 import GameScoreBar from './components/GameScoreBar'

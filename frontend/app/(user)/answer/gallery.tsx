@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import { submitAnswer as submitAnswerToApi } from "@/lib/api";
+import { submitAnswer as submitAnswerToApi } from "@/apis";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";

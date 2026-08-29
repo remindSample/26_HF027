@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 
 import Header from "@/components/Header";
-import { getQuestionsByUser, type QuestionResponse } from "@/lib/api";
+import { getQuestionsByUser, type QuestionResponse } from "@/apis";
 
 type Question = {
   id: number;

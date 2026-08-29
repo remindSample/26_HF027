@@ -5,6 +5,7 @@ export type SignupStep =
   | "PHONE"
   | "VERIFY"
   | "PASSWORD"
+  | "BIRTH_DATE"
   | "COMPLETE";
 
 export type Role = "USER" | "GUARDIAN";

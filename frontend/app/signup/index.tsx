@@ -15,9 +15,10 @@ import SelectMethodStep from "./components/2_SelectMethodStep";
 import ContactStep from "./components/3_ContactStep";
 import VerifyStep from "./components/4_VerifyStep";
 import PasswordStep from "./components/5_PasswordStep";
+import BirthDateStep from "./components/6_BirthDateStep";
 import CompleteStep from "./components/6_CompleteStep";
 import SignupHeader from "./components/SignupHeader";
-import { setCurrentUserId, signupUser } from "../../lib/api";
+import { setCurrentUserId, signupUser } from "@/apis";
 
 export default function SignupScreen() {
   const [step, setStep] = useState<SignupStep>("SELECT_ROLE");
@@ -34,6 +35,7 @@ export default function SignupScreen() {
 
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [birthDate, setBirthDate] = useState("");
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isPasswordConfirmVisible, setIsPasswordConfirmVisible] =
@@ -117,7 +119,7 @@ export default function SignupScreen() {
     setStep("PASSWORD");
   };
 
-  const handleCompleteSignup = async () => {
+  const handleCompletePassword = async () => {
     if (isSubmitting) {
       return;
     }
@@ -137,12 +139,55 @@ export default function SignupScreen() {
       return;
     }
 
+    setStep("BIRTH_DATE");
+  };
+
+  const handleChangeBirthDate = (text: string) => {
+    const onlyNumber = text.replace(/[^0-9]/g, "").slice(0, 8);
+    const year = onlyNumber.slice(0, 4);
+    const month = onlyNumber.slice(4, 6);
+    const day = onlyNumber.slice(6, 8);
+
+    setBirthDate([year, month, day].filter(Boolean).join("-"));
+  };
+
+  const handleCompleteSignup = async () => {
+    if (!role) {
+      Alert.alert("?뚮┝", "?뚯썝 ?좏삎???좏깮?댁＜?몄슂.");
+      return;
+    }
+
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+    if (!datePattern.test(birthDate)) {
+      Alert.alert("알림", "생년월일을 YYYY-MM-DD 형식으로 입력해주세요.");
+      return;
+    }
+
+    const [year, month, day] = birthDate.split("-").map(Number);
+    const parsedDate = new Date(year, month - 1, day);
+    const isValidDate =
+      parsedDate.getFullYear() === year &&
+      parsedDate.getMonth() === month - 1 &&
+      parsedDate.getDate() === day;
+
+    if (!isValidDate) {
+      Alert.alert("알림", "올바른 생년월일을 입력해주세요.");
+      return;
+    }
+
+    if (parsedDate > new Date()) {
+      Alert.alert("알림", "생년월일은 오늘 이후 날짜로 입력할 수 없습니다.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const user = await signupUser({
         name: name.trim(),
         password,
         role,
+        birth_date: birthDate,
         phone: method === "PHONE" ? phone.trim() : undefined,
         email: method === "EMAIL" ? email.trim() : undefined,
       });
@@ -190,11 +235,20 @@ export default function SignupScreen() {
       case "PASSWORD":
         setStep(method === "PHONE" ? "PHONE" : "EMAIL");
         break;
+      case "BIRTH_DATE":
+        setStep("PASSWORD");
+        break;
     }
   };
 
   const isWelcomeStep = step === "SELECT_ROLE" || step === "SELECT_METHOD";
-  const hasInput = ["EMAIL", "PHONE", "VERIFY", "PASSWORD"].includes(step);
+  const hasInput = [
+    "EMAIL",
+    "PHONE",
+    "VERIFY",
+    "PASSWORD",
+    "BIRTH_DATE",
+  ].includes(step);
   const headerTitle = isWelcomeStep ? "RE:Mind에 어서오세요!" : "RE:Mind";
   const headerTitleClassName =
     step === "COMPLETE"
@@ -226,6 +280,9 @@ export default function SignupScreen() {
         case "VERIFY":
         case "PASSWORD":
           setStep(method === "PHONE" ? "PHONE" : "EMAIL");
+          break;
+        case "BIRTH_DATE":
+          setStep("PASSWORD");
           break;
       }
     });
@@ -291,6 +348,13 @@ export default function SignupScreen() {
           onToggleIsPasswordConfirmVisible={() =>
             setIsPasswordConfirmVisible((prev) => !prev)
           }
+          onCompleteSignup={handleCompletePassword}
+          isSubmitting={isSubmitting}
+        />
+      ) : step === "BIRTH_DATE" ? (
+        <BirthDateStep
+          birthDate={birthDate}
+          onChangeBirthDate={handleChangeBirthDate}
           onCompleteSignup={handleCompleteSignup}
           isSubmitting={isSubmitting}
         />
