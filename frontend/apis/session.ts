@@ -6,12 +6,21 @@ const AUTH_SESSION_STORAGE_KEY = "remind_auth_session";
 let authSession: LoginResponse | null = null;
 let currentUserId: number | null = null;
 
-function getStoredAuthSession(): LoginResponse | null {
-  if (typeof window === "undefined") {
+function getWebStorage() {
+  if (typeof window === "undefined" || !window.localStorage) {
     return null;
   }
 
-  const stored = window.localStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+  return window.localStorage;
+}
+
+function getStoredAuthSession(): LoginResponse | null {
+  const storage = getWebStorage();
+  if (!storage) {
+    return null;
+  }
+
+  const stored = storage.getItem(AUTH_SESSION_STORAGE_KEY);
   if (!stored) {
     return null;
   }
@@ -19,7 +28,7 @@ function getStoredAuthSession(): LoginResponse | null {
   try {
     return JSON.parse(stored) as LoginResponse;
   } catch {
-    window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    storage.removeItem(AUTH_SESSION_STORAGE_KEY);
     return null;
   }
 }
@@ -50,8 +59,9 @@ export function setAuthSession(session: LoginResponse) {
   authSession = session;
   currentUserId = session.user.id;
 
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session));
+  const storage = getWebStorage();
+  if (storage) {
+    storage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session));
   }
 }
 
@@ -64,8 +74,9 @@ export function clearAuthSession() {
   authSession = null;
   currentUserId = null;
 
-  if (typeof window !== "undefined") {
-    window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+  const storage = getWebStorage();
+  if (storage) {
+    storage.removeItem(AUTH_SESSION_STORAGE_KEY);
   }
 }
 
