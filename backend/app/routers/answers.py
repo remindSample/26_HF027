@@ -8,7 +8,6 @@ from app.database import get_db
 from app.schemas.answer import AnswerCreate, AnswerResponse, MonthlyAnswerReport
 from app.crud.answer_crud import create_answer, get_answers_by_month
 from app.crud.question_crud import get as get_question
-from app.routers.auth import get_current_user
 
 COMMENT_TEMPLATES = [
     "{name}님의 이번 달 답변은 평균보다 단어 수가 {word_diff}개 {word_dir}습니다. 꾸준한 활동이 도움이 되고 있어요!",
@@ -28,9 +27,9 @@ def submit_answer(data: AnswerCreate, db: Session = Depends(get_db)):
 async def upload_image_answer(
     image: UploadFile = File(...),
     question_id: int = Form(...),
+    user_id: int = Form(...),
     is_private: bool = Form(False),
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
 ):
     if not get_question(db, question_id):
         raise HTTPException(status_code=404, detail="존재하지 않는 질문입니다.")
@@ -67,7 +66,7 @@ async def upload_image_answer(
     return create_answer(
         db,
         AnswerCreate(
-            user_id=current_user.id,
+            user_id=user_id,
             question_id=question_id,
             input_type="handwriting",
             ocr_text=ocr_text,

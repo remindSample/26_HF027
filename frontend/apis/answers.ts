@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { API_BASE_URL, apiRequest } from "./client";
 import { getCurrentUserId } from "./session";
 
 export type AnswerPayload = {
@@ -62,4 +62,46 @@ export function getMonthlyAnswerReport(
   return apiRequest<MonthlyAnswerReport>(
     `/answers/report?year=${year}&month=${month}&user_id=${userId}`
   );
+}
+
+export async function uploadImageAnswer({
+  questionId,
+  imageUri,
+  userId = getCurrentUserId(),
+}: {
+  questionId: number;
+  imageUri: string;
+  userId?: number;
+}) {
+  const formData = new FormData();
+  formData.append("question_id", String(questionId));
+  formData.append("user_id", String(userId));
+  formData.append("image", {
+    uri: imageUri,
+    name: "answer.jpg",
+    type: "image/jpeg",
+  } as unknown as Blob);
+
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}/answers/upload-image`, {
+      method: "POST",
+      body: formData,
+    });
+  } catch {
+    throw new Error("서버에 연결할 수 없습니다. 백엔드 서버가 실행 중인지 확인해주세요.");
+  }
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data && typeof data === "object" && "detail" in data
+        ? String(data.detail)
+        : "촬영 답변 저장에 실패했습니다."
+    );
+  }
+
+  return data as AnswerResponse;
 }

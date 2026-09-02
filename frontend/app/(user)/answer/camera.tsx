@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import { submitAnswer as submitAnswerToApi } from "@/apis";
+import { uploadImageAnswer } from "@/apis";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
@@ -15,6 +15,7 @@ export default function CameraAnswerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraRef>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [ocrText, setOcrText] = useState<string | null>(null);
   const [isTakingPicture, setIsTakingPicture] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,13 +27,15 @@ export default function CameraAnswerScreen() {
     }
 
     setImageUri(nextImageUri);
+    setOcrText(null);
     setIsSubmitting(true);
     try {
-      await submitAnswerToApi({
-        question_id: parsedQuestionId,
-        input_type: "handwriting",
-        image_url: nextImageUri,
+      const answer = await uploadImageAnswer({
+        questionId: parsedQuestionId,
+        imageUri: nextImageUri,
       });
+      setOcrText(answer.ocr_text ?? "인식된 텍스트가 없습니다.");
+      Alert.alert("알림", "촬영 답변이 저장되었습니다.");
     } catch (error) {
       Alert.alert(
         "알림",
@@ -112,8 +115,18 @@ export default function CameraAnswerScreen() {
             <Text className="text-[14px] text-[#333333] font-semibold">촬영된 이미지</Text>
             <Image source={{ uri: imageUri }} className="w-full h-48 rounded-xl bg-[#E8E8E8]" />
             <Text className="text-[12px] text-[#5BA4A4]">
-              {isSubmitting ? "서버에 저장 중..." : "서버 저장 요청 완료"}
+              {isSubmitting ? "OCR 인식 후 저장 중..." : "OCR 저장 요청 완료"}
             </Text>
+            {ocrText && (
+              <View className="rounded-xl bg-[#F5F5F5] p-3">
+                <Text className="text-[13px] font-semibold text-[#333333]">
+                  인식된 답변
+                </Text>
+                <Text className="mt-2 text-[14px] leading-[22px] text-[#222222]">
+                  {ocrText}
+                </Text>
+              </View>
+            )}
             <Text className="text-[12px] text-[#777777]" numberOfLines={1}>
               {imageUri}
             </Text>
