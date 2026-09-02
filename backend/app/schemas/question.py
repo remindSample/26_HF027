@@ -16,6 +16,13 @@ class QuestionCreate(BaseModel):
     content: str
     q_type: Q_TYPE | None = None
     source: Literal["AI_GENERATED", "GUARDIAN_CUSTOM", "WELFARE_PRESET"] = "AI_GENERATED"
+    model_source: str | None = None
+
+
+class QuestionGenerateRequest(BaseModel):
+    tag: Literal["family", "food", "travel", "season", "hobby"]
+    target_user_id: int | None = None
+    created_by: int | None = None
 
 
 class QuestionResponse(BaseModel):

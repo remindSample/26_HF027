@@ -16,6 +16,38 @@ import { Ionicons } from "@expo/vector-icons";
 import { loginUser, setAuthSession } from "../apis";
 import IcChevronDown from "../assets/Icon/Ic_Chevron down.svg";
 
+type AuthButtonProps = {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  variant?: "primary" | "outline";
+};
+
+function AuthButton({
+  label,
+  onPress,
+  disabled = false,
+  variant = "primary",
+}: AuthButtonProps) {
+  const buttonClassName =
+    variant === "primary"
+      ? "border-[#555555] bg-black"
+      : "border-black bg-white";
+  const textClassName = variant === "primary" ? "text-white" : "text-[#BDBDBD]";
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      className={`h-[64px] items-center justify-center rounded-[14px] border-[2px] ${buttonClassName}`}
+    >
+      <Text className={`text-[20px] font-semibold ${textClassName}`}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 export default function LoginScreen() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
@@ -41,7 +73,7 @@ export default function LoginScreen() {
     setIsSubmitting(true);
 
     try {
-      const data = await loginUser({ identifier: id, password });
+      const data = await loginUser({ identifier: id.trim(), password });
       setAuthSession(data);
 
       if (data.user.role === "USER") {
@@ -104,7 +136,7 @@ export default function LoginScreen() {
         <TextInput
           value={id}
           onChangeText={setId}
-          placeholder="아이디"
+          placeholder="이메일 또는 전화번호"
           placeholderTextColor="#111111"
           autoCapitalize="none"
           returnKeyType="next"
@@ -142,6 +174,15 @@ export default function LoginScreen() {
           </Pressable>
         </View>
 
+        {/* 로그인 버튼 */}
+        <View className="mt-9">
+          <AuthButton
+            label={isSubmitting ? "처리 중..." : "로그인"}
+            onPress={handleLogin}
+            disabled={isSubmitting}
+          />
+        </View>
+
         {/* or */}
         <Text className="mt-10 text-center text-[20px] text-black">or</Text>
 
@@ -149,14 +190,9 @@ export default function LoginScreen() {
         <View className="mt-10 h-[1.5px] bg-black" />
 
         {/* 회원가입 버튼 */}
-        <Pressable
-          onPress={() => router.push("/signup")}
-          className="mt-14 h-[64px] items-center justify-center rounded-[14px] border-[2px] border-[#555555] bg-black"
-        >
-          <Text className="text-[20px] font-semibold text-white">
-            회원가입
-          </Text>
-        </Pressable>
+        <View className="mt-14">
+          <AuthButton label="회원가입" onPress={() => router.push("/signup")} />
+        </View>
 
         {/* 카카오 로그인 */}
         <Pressable

@@ -1,6 +1,8 @@
 import Header from "@/components/Header";
-import { router } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { getMonthlyAnswerReport, type AnswerResponse } from "@/apis";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 
 // 데모용 mock 데이터 (실제 API 연결 시 교체)
 const MOCK_DATA = {
@@ -15,9 +17,80 @@ const MOCK_DATA = {
 };
 
 const CALENDAR_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
-const COMPLETED_DATES = [1, 2, 3, 5, 7, 8, 10, 11];
 
 export default function ActivityReportScreen() {
+  const [now, setNow] = useState(() => new Date());
+  const [answers, setAnswers] = useState<AnswerResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+  const firstDayOffset = new Date(currentYear, currentMonth - 1, 1).getDay();
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+    let isMounted = true;
+
+    async function loadAnswers() {
+      setIsLoading(true);
+      try {
+        const report = await getMonthlyAnswerReport(currentYear, currentMonth);
+        if (isMounted) {
+          setAnswers(report.answers);
+        }
+      } catch {
+        if (isMounted) {
+          setAnswers([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadAnswers();
+
+    return () => {
+      isMounted = false;
+    };
+    }, [currentYear, currentMonth])
+  );
+
+  const answersByDay = useMemo(() => {
+    return answers.reduce<Record<number, AnswerResponse[]>>((acc, answer) => {
+      const date = new Date(answer.answered_at);
+      const day = date.getDate();
+      acc[day] = [...(acc[day] ?? []), answer];
+      return acc;
+    }, {});
+  }, [answers]);
+
+  const handlePressDay = (day: number) => {
+    const dayAnswers = answersByDay[day] ?? [];
+
+    if (dayAnswers.length === 0) {
+      return;
+    }
+
+    Alert.alert(
+      `${currentMonth}월 ${day}일 답변`,
+      dayAnswers
+        .map((answer) => answer.content_text || answer.ocr_text || "텍스트 답변 없음")
+        .join("\n\n")
+    );
+  };
+
   return (
     <View className="flex-1 bg-[#F0F8FF]">
       <Header title="활동 리포트" />
@@ -38,7 +111,7 @@ export default function ActivityReportScreen() {
         >
           <View className="flex-row justify-between items-center">
             <Text className="text-[15px] font-bold text-[#5BA4A4]">
-              5월 리포트 요약
+              {currentMonth}월 리포트 요약
             </Text>
             <View className="bg-[#B7E4C7] rounded-lg px-2.5 py-1">
               <Text className="text-xs font-semibold text-[#1B5E20]">
@@ -79,9 +152,15 @@ export default function ActivityReportScreen() {
               활동 달력
             </Text>
             <Text className="text-sm text-[#5BA4A4] font-semibold">
-              ‹ 2026.05 ›
+              ‹ {currentYear}.{String(currentMonth).padStart(2, "0")} ›
             </Text>
           </View>
+
+          {isLoading && (
+            <View className="items-center py-3">
+              <ActivityIndicator color="#5BA4A4" />
+            </View>
+          )}
 
           <View className="flex-row flex-wrap">
             {CALENDAR_DAYS.map((d) => (
@@ -92,36 +171,37 @@ export default function ActivityReportScreen() {
                 {d}
               </Text>
             ))}
-            {/* 5월 1일 = 목요일, offset 4 */}
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: firstDayOffset }).map((_, i) => (
               <View
                 key={`empty-${i}`}
                 className="w-[14.28%] items-center mb-1.5 h-9"
               />
             ))}
-            {Array.from({ length: 11 }).map((_, i) => {
+            {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
-              const done = COMPLETED_DATES.includes(day);
+              const done = Boolean(answersByDay[day]?.length);
               return (
-                <View key={day} className="w-[14.28%] items-center mb-1.5 h-9">
+                <Pressable
+                  key={day}
+                  className="w-[14.28%] items-center mb-1.5 h-9"
+                  onPress={() => handlePressDay(day)}
+                >
+                  {done && (
+                    <View className="absolute right-[18px] top-0 h-1.5 w-1.5 rounded-full bg-[#FF4B4B]" />
+                  )}
                   <Text
                     className={`text-[13px] ${done ? "font-bold text-[#222222]" : "text-[#555555]"}`}
                   >
                     {day}
                   </Text>
-                  {done && (
-                    <Text className="text-[8px] text-[#5BA4A4] mt-0.5">●</Text>
-                  )}
-                </View>
+                </Pressable>
               );
             })}
           </View>
 
           <View className="flex-row items-center gap-1.5 mt-2">
-            <Text className="text-xs text-[#5BA4A4]">●</Text>
-            <Text className="text-xs text-[#777777] mr-3">활동 완료</Text>
-            <Text className="text-xs text-[#CCCCCC]">●</Text>
-            <Text className="text-xs text-[#777777]">미완료</Text>
+            <Text className="text-xs text-[#FF4B4B]">●</Text>
+            <Text className="text-xs text-[#777777]">답변 완료</Text>
           </View>
         </View>
 

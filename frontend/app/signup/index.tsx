@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { router, useNavigation } from "expo-router";
-import type { Role, SignupMethod, SignupStep } from "./types";
+import type { Role, SignupMethod, SignupStep } from "@/types/signup";
 import SelectRoleStep from "./components/1_SelectRoleStep";
 import SelectMethodStep from "./components/2_SelectMethodStep";
 import ContactStep from "./components/3_ContactStep";
@@ -153,7 +153,7 @@ export default function SignupScreen() {
 
   const handleCompleteSignup = async () => {
     if (!role) {
-      Alert.alert("?뚮┝", "?뚯썝 ?좏삎???좏깮?댁＜?몄슂.");
+      Alert.alert("알림", "회원 유형을 선택해주세요.");
       return;
     }
 
