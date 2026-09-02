@@ -30,6 +30,18 @@ export type AnswerResponse = {
   answered_at: string;
 };
 
+export type MonthlyAnswerReport = {
+  year: number;
+  month: number;
+  answer_count: number;
+  answers: AnswerResponse[];
+  avg_word_count: number;
+  avg_sentence_count: number;
+  avg_complexity_score: number;
+  sentiment_summary: Record<string, number>;
+  ai_comment: string;
+};
+
 export function submitAnswer(payload: AnswerPayload) {
   return apiRequest<AnswerResponse>("/answers", {
     method: "POST",
@@ -40,4 +52,14 @@ export function submitAnswer(payload: AnswerPayload) {
       ...payload,
     }),
   });
+}
+
+export function getMonthlyAnswerReport(
+  year: number,
+  month: number,
+  userId = getCurrentUserId()
+) {
+  return apiRequest<MonthlyAnswerReport>(
+    `/answers/report?year=${year}&month=${month}&user_id=${userId}`
+  );
 }

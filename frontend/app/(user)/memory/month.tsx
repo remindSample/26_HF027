@@ -1,70 +1,42 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+
+import { getMonthlyAnswerReport, type AnswerResponse } from "@/apis";
 
 type MemoryItem = {
   id: number;
   isoDate: string;
   displayDate: string;
-  question: string;
+  answerText: string;
 };
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
-const memoryItems: MemoryItem[] = [
-  {
-    id: 1,
-    isoDate: "2026-04-03",
-    displayDate: "2026년 04월 03일",
-    question: "가장 행복했던 여행지는 어디인가요?",
-  },
-  {
-    id: 2,
-    isoDate: "2026-04-22",
-    displayDate: "2026년 04월 22일",
-    question: "최근에 가장 또렷하게 떠오른 기억은 무엇인가요?",
-  },
-  {
-    id: 3,
-    isoDate: "2026-04-23",
-    displayDate: "2026년 04월 23일",
-    question: "함께 시간을 보내고 싶은 사람은 누구인가요?",
-  },
-  {
-    id: 4,
-    isoDate: "2026-04-24",
-    displayDate: "2026년 04월 24일",
-    question: "오늘 떠오른 따뜻한 장면을 적어보세요.",
-  },
-  {
-    id: 5,
-    isoDate: "2026-04-26",
-    displayDate: "2026년 04월 26일",
-    question: "오래 기억하고 싶은 장소는 어디인가요?",
-  },
-  {
-    id: 6,
-    isoDate: "2026-04-28",
-    displayDate: "2026년 04월 28일",
-    question: "기분이 좋아졌던 순간을 떠올려보세요.",
-  },
-  {
-    id: 7,
-    isoDate: "2026-04-29",
-    displayDate: "2026년 04월 29일",
-    question: "가장 소중한 물건에는 어떤 기억이 있나요?",
-  },
-  {
-    id: 8,
-    isoDate: "2026-04-30",
-    displayDate: "2026년 04월 30일",
-    question: "이번 달에 새롭게 떠오른 기억은 무엇인가요?",
-  },
-];
-
 function getIsoDate(year: number, month: number, day: number) {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function toDateKey(date: Date) {
+  return getIsoDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+}
+
+function formatDisplayDate(date: Date) {
+  return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(
+    date.getDate(),
+  ).padStart(2, "0")}일`;
+}
+
+function toMemoryItem(answer: AnswerResponse): MemoryItem {
+  const answeredAt = new Date(answer.answered_at);
+
+  return {
+    id: answer.id,
+    isoDate: toDateKey(answeredAt),
+    displayDate: formatDisplayDate(answeredAt),
+    answerText: answer.content_text || answer.ocr_text || "텍스트 답변 없음",
+  };
 }
 
 function getCalendarCells(year: number, month: number) {
@@ -108,10 +80,16 @@ function MemoryTabs() {
   );
 }
 
-function MonthMemoryList({ items }: { items: MemoryItem[] }) {
+function MonthMemoryList({
+  items,
+  title,
+}: {
+  items: MemoryItem[];
+  title: string;
+}) {
   return (
     <View className="border-t border-white px-5 pb-5 pt-6">
-      <Text className="text-[21px] font-medium text-black">이 달의 기억들</Text>
+      <Text className="text-[21px] font-medium text-black">{title}</Text>
 
       <View className="mt-5 gap-4">
         {items.length > 0 ? (
@@ -124,7 +102,7 @@ function MonthMemoryList({ items }: { items: MemoryItem[] }) {
                 {item.displayDate}
               </Text>
               <Text className="mt-5 text-[20px] font-medium leading-[29px] text-black">
-                {item.question}
+                {item.answerText}
               </Text>
             </Pressable>
           ))
@@ -141,34 +119,100 @@ function MonthMemoryList({ items }: { items: MemoryItem[] }) {
 }
 
 export default function GuardianMemoryMonthScreen() {
-  const [selectedYear, setSelectedYear] = useState(2026);
-  const [selectedMonth, setSelectedMonth] = useState(4);
+  const today = new Date();
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
+  const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [pickerType, setPickerType] = useState<"year" | "month" | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadAnswers() {
+        setIsLoading(true);
+        try {
+          const report = await getMonthlyAnswerReport(selectedYear, selectedMonth);
+          if (isMounted) {
+            setMemoryItems(report.answers.map(toMemoryItem));
+          }
+        } catch {
+          if (isMounted) {
+            setMemoryItems([]);
+          }
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        }
+      }
+
+      loadAnswers();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [selectedMonth, selectedYear]),
+  );
 
   const answerDates = useMemo(
     () => new Set(memoryItems.map((item) => item.isoDate)),
-    [],
+    [memoryItems],
   );
+  const memoryItemsByDate = useMemo(() => {
+    return memoryItems.reduce<Record<string, MemoryItem[]>>((acc, item) => {
+      acc[item.isoDate] = [...(acc[item.isoDate] ?? []), item];
+      return acc;
+    }, {});
+  }, [memoryItems]);
   const calendarCells = useMemo(
     () => getCalendarCells(selectedYear, selectedMonth),
     [selectedMonth, selectedYear],
   );
   const monthItems = useMemo(
-    () =>
-      memoryItems.filter((item) =>
+    () => {
+      const currentMonthItems = memoryItems.filter((item) =>
         item.isoDate.startsWith(
           `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`,
         ),
-      ),
-    [selectedMonth, selectedYear],
+      );
+
+      if (!selectedDateKey) {
+        return currentMonthItems;
+      }
+
+      return currentMonthItems.filter((item) => item.isoDate === selectedDateKey);
+    },
+    [memoryItems, selectedDateKey, selectedMonth, selectedYear],
   );
+
+  const selectDayAnswers = (day: number) => {
+    const dateKey = getIsoDate(selectedYear, selectedMonth, day);
+    const dayItems = memoryItemsByDate[dateKey] ?? [];
+
+    if (dayItems.length === 0) {
+      return;
+    }
+
+    setSelectedDateKey(dateKey);
+  };
 
   const moveMonth = (amount: number) => {
     const nextDate = new Date(selectedYear, selectedMonth - 1 + amount, 1);
     setSelectedYear(nextDate.getFullYear());
     setSelectedMonth(nextDate.getMonth() + 1);
+    setSelectedDateKey(null);
     setPickerType(null);
   };
+
+  const selectedDay = selectedDateKey
+    ? Number(selectedDateKey.slice(8, 10))
+    : null;
+  const memoryListTitle = selectedDay
+    ? `${selectedMonth}월 ${selectedDay}일 기억들`
+    : "이 달의 기억들";
 
   const years = Array.from({ length: 5 }, (_, index) => selectedYear - 2 + index);
   const months = Array.from({ length: 12 }, (_, index) => index + 1);
@@ -316,26 +360,33 @@ export default function GuardianMemoryMonthScreen() {
 
               <View className="mt-4 flex-row flex-wrap">
                 {calendarCells.map((day, index) => {
+                  const dateKey =
+                    day !== null ? getIsoDate(selectedYear, selectedMonth, day) : "";
                   const hasAnswer =
-                    day !== null &&
-                    answerDates.has(getIsoDate(selectedYear, selectedMonth, day));
+                    day !== null && answerDates.has(dateKey);
 
                   return (
                     <View
                       key={`${day ?? "empty"}-${index}`}
                       className="w-[14.2857%] p-[4px]"
                     >
-                      <View
+                      <Pressable
                         className={`aspect-square items-center justify-center rounded-[16px] bg-white ${
                           hasAnswer ? "border-[3px] border-black" : ""
                         }`}
+                        onPress={() => {
+                          if (day !== null) selectDayAnswers(day);
+                        }}
                       >
+                        {hasAnswer ? (
+                          <View className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#FF4B4B]" />
+                        ) : null}
                         {day !== null ? (
                           <Text className="text-[24px] font-medium text-black">
                             {day}
                           </Text>
                         ) : null}
-                      </View>
+                      </Pressable>
                     </View>
                   );
                 })}
@@ -343,7 +394,13 @@ export default function GuardianMemoryMonthScreen() {
             </View>
           </View>
 
-          <MonthMemoryList items={monthItems} />
+          {isLoading ? (
+            <View className="items-center py-4">
+              <ActivityIndicator color="#7B7B7B" />
+            </View>
+          ) : null}
+
+          <MonthMemoryList items={monthItems} title={memoryListTitle} />
         </View>
       </ScrollView>
     </View>

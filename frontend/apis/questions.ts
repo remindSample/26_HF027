@@ -16,3 +16,15 @@ export type QuestionResponse = {
 export function getQuestionsByUser(userId = getCurrentUserId()) {
   return apiRequest<QuestionResponse[]>(`/questions/user/${userId}`);
 }
+
+export type QuestionTag = "family" | "food" | "travel" | "season" | "hobby";
+
+export function generateQuestion(tag: QuestionTag, userId = getCurrentUserId()) {
+  return apiRequest<QuestionResponse>("/questions/generate", {
+    method: "POST",
+    body: JSON.stringify({
+      tag,
+      target_user_id: userId,
+    }),
+  });
+}

@@ -1,9 +1,48 @@
+import { useState } from "react";
 import { Link } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
 import Ic_Game3 from "../../assets/Icon/Ic_Game3.png";
 
+const ONBOARDING_STEPS = [
+  {
+    icon: "한줄",
+    title: "매일 한 줄 기록",
+    description: "오늘의 질문에 답하며 기억을 짧게 남겨보세요.",
+  },
+  {
+    icon: "연속",
+    title: "연속 기록 쌓기",
+    description: "하루하루 기록하면 연속 기록이 쌓여요.",
+  },
+  {
+    icon: "달력",
+    title: "달력으로 한눈에",
+    description: "기록한 날을 달력에서 확인하고 지난 답변도 다시 볼 수 있어요.",
+  },
+  {
+    icon: "안내",
+    title: "안내",
+    description:
+      "이 앱은 의료 진단·치료 목적이 아니며, 매일 기록하는 활동을 돕는 도구예요.",
+  },
+];
+
 export default function HomeScreen() {
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [isOnboardingVisible, setIsOnboardingVisible] = useState(true);
+  const currentOnboardingStep = ONBOARDING_STEPS[onboardingStep];
+  const isLastOnboardingStep = onboardingStep === ONBOARDING_STEPS.length - 1;
+
+  const handleNextOnboarding = () => {
+    if (isLastOnboardingStep) {
+      setIsOnboardingVisible(false);
+      return;
+    }
+
+    setOnboardingStep((prev) => prev + 1);
+  };
+
   return (
     <View className="flex-1 bg-white">
       {/* 상단 바 */}
@@ -81,6 +120,63 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {isOnboardingVisible ? (
+        <View className="absolute inset-0 z-10 bg-black/75 px-7 pt-[72px]">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="온보딩 건너뛰기"
+            onPress={() => setIsOnboardingVisible(false)}
+            className="self-end px-2 py-2"
+          >
+            <Text className="text-[18px] font-semibold text-white">
+              건너뛰기
+            </Text>
+          </Pressable>
+
+          <View className="flex-1 items-center justify-center">
+            <View className="mb-9 h-[88px] w-[88px] items-center justify-center rounded-[18px] bg-white">
+              <Text className="text-[22px] font-bold text-[#7B18C8]">
+                {currentOnboardingStep.icon}
+              </Text>
+            </View>
+
+            <Text className="text-center text-[34px] font-bold leading-[44px] text-white">
+              {currentOnboardingStep.title}
+            </Text>
+
+            <Text className="mt-6 max-w-[320px] text-center text-[22px] leading-[34px] text-[#D5D8DF]">
+              {currentOnboardingStep.description}
+            </Text>
+
+            <View className="mt-12 flex-row items-center gap-3">
+              {ONBOARDING_STEPS.map((step, index) => (
+                <View
+                  key={step.title}
+                  className={
+                    index === onboardingStep
+                      ? "h-3 w-12 rounded-full bg-[#7B18C8]"
+                      : "h-3 w-3 rounded-full bg-[#9CA3AF]"
+                  }
+                />
+              ))}
+            </View>
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              isLastOnboardingStep ? "온보딩 시작하기" : "다음 온보딩 보기"
+            }
+            onPress={handleNextOnboarding}
+            className="mb-10 h-[64px] items-center justify-center rounded-[18px] bg-[#7B18C8]"
+          >
+            <Text className="text-[24px] font-bold text-white">
+              {isLastOnboardingStep ? "시작하기" : "다음"}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }

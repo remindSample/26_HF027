@@ -1,0 +1,47 @@
+name: backend-ci
+
+on:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  push:
+    branches:
+      - feature/haneul
+      - develop
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Import FastAPI app
+        env:
+          DB_HOST: localhost
+          DB_PORT: "3306"
+          DB_USER: root
+          DB_PASSWORD: ""
+          DB_NAME: remind_db
+          SECRET_KEY: ci-secret-key
+        run: python -c "import app.main"
+
+      - name: Build Docker image
+        run: docker build -t remind-backend:ci .

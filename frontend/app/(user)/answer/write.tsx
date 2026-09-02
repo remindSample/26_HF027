@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import { submitAnswer as submitAnswerToApi } from "@/apis";
+import { getMonthlyAnswerReport, submitAnswer as submitAnswerToApi } from "@/apis";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
@@ -12,6 +12,27 @@ export default function WriteAnswerScreen() {
   const [draft, setDraft] = useState("");
   const [answerText, setAnswerText] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const toDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const getAnswerStreak = (answeredDates: Date[]) => {
+    const dateKeys = new Set(answeredDates.map(toDateKey));
+    const currentDate = new Date();
+    let streak = 0;
+
+    while (dateKeys.has(toDateKey(currentDate))) {
+      streak += 1;
+      currentDate.setDate(currentDate.getDate() - 1);
+    }
+
+    return streak;
+  };
 
   const submitAnswer = async (text: string) => {
     const trimmed = text.trim();
@@ -33,6 +54,21 @@ export default function WriteAnswerScreen() {
 
       setAnswerText(answer.content_text ?? trimmed);
       setDraft("");
+
+      const answeredAt = new Date(answer.answered_at);
+      const report = await getMonthlyAnswerReport(
+        answeredAt.getFullYear(),
+        answeredAt.getMonth() + 1
+      );
+      const streak = getAnswerStreak(
+        report.answers.map((item) => new Date(item.answered_at))
+      );
+
+      if (streak >= 2) {
+        Alert.alert("연속답변일수!", `${streak}일 연속으로 답변했어요.`);
+      } else {
+        Alert.alert("알림", "답변이 저장되었습니다.");
+      }
     } catch (error) {
       Alert.alert(
         "알림",

@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import type { Role } from "../types";
+import type { Role } from "@/types/signup";
 
 type Props = {
   onSelectRole: (role: Role) => void;

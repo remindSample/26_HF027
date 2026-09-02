@@ -10,7 +10,7 @@ export default function BottomBar() {
   const albumHref: Href =
     segments[0] === "(guardian)"
       ? "/(guardian)/memory/list"
-      : "/(user)/memory/list";
+      : "/(user)/memory/month";
 
   return (
     <View
@@ -35,7 +35,7 @@ export default function BottomBar() {
 
       <Link href={albumHref} asChild>
         <Pressable className="h-[70px] flex-1 items-center justify-center">
-          <Text className="text-center text-[28px] font-bold text-[#CFCFCF]">
+          <Text className="text-center text-[28px] font-bold text-[#000000]">
             앨범
           </Text>
         </Pressable>

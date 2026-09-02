@@ -1,5 +1,5 @@
 import { Pressable, Text, TextInput, View } from "react-native";
-import type { SignupStep } from "../types";
+import type { SignupStep } from "@/types/signup";
 
 type Props = {
   step: Extract<SignupStep, "EMAIL" | "PHONE">;

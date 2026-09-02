@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 
 import Header from "@/components/Header";
-import { getQuestionsByUser, type QuestionResponse } from "@/apis";
+import {
+  generateQuestion,
+  getMonthlyAnswerReport,
+  getQuestionsByUser,
+  type QuestionResponse,
+  type QuestionTag,
+} from "@/apis";
 
 type Question = {
   id: number;
@@ -13,34 +19,52 @@ type Question = {
   date: string;
 };
 
-const TODAY = "2026년 5월 29일 (수)";
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-const FALLBACK_QUESTIONS: Question[] = [
-  {
-    id: 1,
-    q_type: "memory_recall",
-    content: "살면서 가장 기억에 남는 남편과의 순간은 언제였나요?",
-    answered: true,
-    date: "2026.05.29",
-  },
-  {
-    id: 2,
-    q_type: "emotional_expression",
-    content: "가장 좋아하는 음식과 그 이유는 무엇인가요?",
-    answered: false,
-    date: "2026.05.29",
-  },
+function formatToday(date: Date) {
+  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 (${WEEKDAYS[date.getDay()]})`;
+}
+
+function formatQuestionDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}.${month}.${day} (${WEEKDAYS[date.getDay()]})`;
+}
+
+function getFallbackQuestions(date = new Date()): Question[] {
+  const questionDate = formatQuestionDate(date);
+
+  return [
+    {
+      id: 1,
+      q_type: "memory_recall",
+      content: "살면서 가장 기억에 남는 남편과의 순간은 언제였나요?",
+      answered: true,
+      date: questionDate,
+    },
+    {
+      id: 2,
+      q_type: "emotional_expression",
+      content: "가장 좋아하는 음식과 그 이유는 무엇인가요?",
+      answered: false,
+      date: questionDate,
+    },
+  ];
+}
+
+const QUESTION_TAGS: { label: string; value: QuestionTag }[] = [
+  { label: "가족", value: "family" },
+  { label: "음식", value: "food" },
+  { label: "여행", value: "travel" },
+  { label: "계절", value: "season" },
+  { label: "취미", value: "hobby" },
 ];
 
 function toQuestion(question: QuestionResponse): Question {
   const createdAt = new Date(question.created_at);
-  const date = Number.isNaN(createdAt.getTime())
-    ? ""
-    : createdAt.toLocaleDateString("ko-KR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      });
+  const date = Number.isNaN(createdAt.getTime()) ? "" : formatQuestionDate(createdAt);
 
   return {
     id: question.id,
@@ -52,24 +76,49 @@ function toQuestion(question: QuestionResponse): Question {
 }
 
 export default function QuestionScreen() {
-  const [questions, setQuestions] = useState<Question[]>(FALLBACK_QUESTIONS);
+  const [questions, setQuestions] = useState<Question[]>(() => getFallbackQuestions());
+  const [answeredQuestionIds, setAnsweredQuestionIds] = useState<Set<number>>(
+    new Set()
+  );
+  const [today, setToday] = useState(() => new Date());
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedTag, setSelectedTag] = useState<QuestionTag | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setToday(new Date());
+    }, 60000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadQuestions() {
       try {
-        const data = await getQuestionsByUser();
+        const now = new Date();
+        const [questionData, reportData] = await Promise.all([
+          getQuestionsByUser(),
+          getMonthlyAnswerReport(now.getFullYear(), now.getMonth() + 1),
+        ]);
         if (!isMounted) return;
 
-        setQuestions(data.length > 0 ? data.map(toQuestion) : FALLBACK_QUESTIONS);
+        setQuestions(
+          questionData.length > 0 ? questionData.map(toQuestion) : getFallbackQuestions()
+        );
+        setAnsweredQuestionIds(
+          new Set(reportData.answers.map((answer) => answer.question_id))
+        );
         setErrorMessage(null);
       } catch (error) {
         if (!isMounted) return;
 
-        setQuestions(FALLBACK_QUESTIONS);
+        setQuestions(getFallbackQuestions());
         setErrorMessage(
           error instanceof Error
             ? error.message
@@ -87,6 +136,27 @@ export default function QuestionScreen() {
     };
   }, []);
 
+  const handleGenerateQuestion = async (tag: QuestionTag) => {
+    if (isGenerating) {
+      return;
+    }
+
+    setSelectedTag(tag);
+    setIsGenerating(true);
+    setErrorMessage(null);
+
+    try {
+      const question = await generateQuestion(tag);
+      setQuestions((prev) => [toQuestion(question), ...prev]);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "질문 생성에 실패했습니다."
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <View className="flex-1 bg-[#F0F8FF]">
 
@@ -99,11 +169,43 @@ export default function QuestionScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text className="text-[15px] font-semibold text-[#333333]">
-          {TODAY}
+          {formatToday(today)}
         </Text>
         <Text className="text-[13px] text-[#5BA4A4] font-semibold mb-1">
-          오늘의 답변 완료!
+          해시태그를 누르면 오늘의 질문이 생성돼요.
         </Text>
+
+        <View className="flex-row flex-wrap gap-2">
+          {QUESTION_TAGS.map((tag) => {
+            const isSelected = selectedTag === tag.value;
+
+            return (
+              <Pressable
+                key={tag.value}
+                onPress={() => handleGenerateQuestion(tag.value)}
+                disabled={isGenerating}
+                className={`rounded-full border px-4 py-2 ${
+                  isSelected
+                    ? "border-[#5BA4A4] bg-[#D8EDEE]"
+                    : "border-[#D9EAEA] bg-white"
+                }`}
+              >
+                <Text className="text-[13px] font-semibold text-[#333333]">
+                  #{tag.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {isGenerating && (
+          <View className="bg-white rounded-[14px] p-5 items-center">
+            <ActivityIndicator color="#5BA4A4" />
+            <Text className="mt-2 text-[13px] text-[#777777]">
+              OpenAI가 질문을 만들고 있어요.
+            </Text>
+          </View>
+        )}
 
         {isLoading && (
           <View className="bg-white rounded-[14px] p-5 items-center">
@@ -134,13 +236,15 @@ export default function QuestionScreen() {
           >
             <Pressable
               className={`bg-white rounded-[14px] p-[18px] gap-2.5 border ${
-                q.answered ? "border-[#B7E4C7]" : "border-[#E8E8E8]"
+                answeredQuestionIds.has(q.id) || q.answered
+                  ? "border-[#B7E4C7]"
+                  : "border-[#E8E8E8]"
               }`}
               style={{ elevation: 1 }}
             >
               <View className="flex-row justify-between items-center">
-                <Text className="text-xs text-[#999999]">{q.date} (수)</Text>
-                {q.answered && (
+                <Text className="text-xs text-[#999999]">{q.date}</Text>
+                {(answeredQuestionIds.has(q.id) || q.answered) && (
                   <View className="bg-[#B7E4C7] rounded-md px-2 py-[3px]">
                     <Text className="text-[11px] font-semibold text-[#1B5E20]">
                       답변 완료
@@ -151,7 +255,7 @@ export default function QuestionScreen() {
               <Text className="text-[15px] text-[#222222] leading-[23px]">
                 {q.content}
               </Text>
-              {q.answered && (
+              {(answeredQuestionIds.has(q.id) || q.answered) && (
                 <Text className="text-xs text-[#5BA4A4] font-semibold">
                   답변 완료 ✓
                 </Text>
