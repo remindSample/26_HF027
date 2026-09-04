@@ -39,16 +39,7 @@ export default function HomeScreen() {
 
               <Pressable
                 style={styles.menuButton}
-                onPress={() =>
-                  router.push({
-                    pathname: "/play",
-                    params: {
-                      level: "normal",
-                      noteSpeedMs: "3400",
-                      spawnMs: "2400"
-                    }
-                  })
-                }
+                onPress={() => router.push("/level" as never)}
               >
                 <Text style={styles.menuButtonText}>게임 시작하기</Text>
               </Pressable>
