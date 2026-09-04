@@ -13,7 +13,7 @@ export default function TabsLayout() {
 
   return (
     /*상단만 safeArea 적용*/
-    <SafeAreaView edges={["top"]} className="flex-1 bg-white">
+    <SafeAreaView edges={["top"]} className="flex-1 bg-[#FDF2EC]">
       <View className="flex-1">
         <Slot />
       </View>

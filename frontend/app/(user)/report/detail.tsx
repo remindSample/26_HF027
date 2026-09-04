@@ -5,18 +5,18 @@ import Header from "@/components/Header";
 
 // 데모용 mock 데이터
 const WORD_USAGE = [
-  { label: "5월", value: 0.82, isUser: true },
-  { label: "4월", value: 0.65, isUser: false },
-  { label: "3월", value: 0.7, isUser: false },
-  { label: "2월", value: 0.58, isUser: false },
+  { label: "9월", value: 0.82, isUser: true },
+  { label: "8월", value: 0.65, isUser: false },
+  { label: "7월", value: 0.7, isUser: false },
+  { label: "6월", value: 0.58, isUser: false },
   { label: "평균", value: 0.68, isUser: false },
 ];
 
 const COMPLEXITY = [
-  { label: "5월", value: 8.2, isUser: true },
-  { label: "4월", value: 6.5, isUser: false },
-  { label: "3월", value: 7.0, isUser: false },
-  { label: "2월", value: 5.8, isUser: false },
+  { label: "9월", value: 8.2, isUser: true },
+  { label: "8월", value: 6.5, isUser: false },
+  { label: "7월", value: 7.0, isUser: false },
+  { label: "6월", value: 5.8, isUser: false },
   { label: "평균", value: 6.9, isUser: false },
 ];
 
