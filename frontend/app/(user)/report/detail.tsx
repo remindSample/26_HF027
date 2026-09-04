@@ -84,7 +84,7 @@ function SentimentBar({
 
 export default function DetailScreen() {
   return (
-    <View className="flex-1 bg-[#F0F8FF]">
+    <View className="flex-1 bg-[#FDF2EC]">
       <Header title="상세 지표" />
 
       <ScrollView

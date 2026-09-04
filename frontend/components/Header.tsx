@@ -11,7 +11,7 @@ export default function Header({
   showBackButton = true,
 }: HeaderProps) {
   return (
-    <View className="flex-row items-center justify-between border-b border-[#E0E0E0] bg-white px-4 py-5">
+    <View className="flex-row items-center justify-between border-b border-[#E0E0E0] bg-[#B9C5C1] px-4 py-5">
       {showBackButton ? (
         <Pressable onPress={() => router.back()} className="w-10 items-center">
           <Text className="text-2xl text-[#333333]">←</Text>

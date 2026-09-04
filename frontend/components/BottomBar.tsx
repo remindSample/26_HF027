@@ -73,7 +73,7 @@ export default function BottomBar() {
   return (
     <View
       style={{ marginTop: -5, paddingBottom: Math.max(bottom, 8) }}
-      className="bg-[#FDF2EC] px-[14px] pt-2"
+      className="bg-transparent px-[14px] pt-2"
     >
       <View
         className="h-[74px] flex-row items-center rounded-full bg-[#F1EBE6] px-2"
