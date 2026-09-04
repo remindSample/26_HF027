@@ -126,8 +126,8 @@ export default function HomeScreen() {
             shadowRadius: 0,
           }}
         >
-          <View className="h-[72px] flex-row items-center justify-between border-b border-black px-6">
-            <Text className="text-[18px] bg-[#F9EBDF] font-medium text-[#174C33]">
+          <View className="h-[72px] flex-row items-center justify-between border-b border-black bg-[#F9EBDF] px-6">
+            <Text className="text-[18px] font-medium text-[#174C33]">
               오늘의 질문
             </Text>
             <View className="h-[24px] w-[102px] items-center justify-center rounded-[8px] border border-[#8C8C8C] bg-[#FDF2EC]">
@@ -147,7 +147,7 @@ export default function HomeScreen() {
                 style={{
                   elevation: 3,
                   shadowColor: "#000000",
-                  shadowOffset: { width: 3, height: 3 },
+                  shadowOffset: { width: 2, height: 2 },
                   shadowOpacity: 1,
                   shadowRadius: 0,
                 }}
@@ -167,7 +167,7 @@ export default function HomeScreen() {
               style={{
                 elevation: 3,
                 shadowColor: "#000000",
-                shadowOffset: { width: 3, height: 3 },
+                shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 1,
                 shadowRadius: 0,
               }}
@@ -186,7 +186,7 @@ export default function HomeScreen() {
               style={{
                 elevation: 3,
                 shadowColor: "#000000",
-                shadowOffset: { width: 3, height: 3 },
+                shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 1,
                 shadowRadius: 0,
               }}
@@ -202,7 +202,7 @@ export default function HomeScreen() {
               style={{
                 elevation: 3,
                 shadowColor: "#000000",
-                shadowOffset: { width: 3, height: 3 },
+                shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 1,
                 shadowRadius: 0,
               }}
@@ -228,10 +228,10 @@ export default function HomeScreen() {
                 key={memory.question}
                 className="min-h-[86px] justify-center rounded-[14px] bg-[#FAEDE0] px-[24px] py-[18px]"
               >
-                <Text className="text-[16px] font-medium text-[#9B9B9B]">
+                <Text className="text-[16px] font-regular text-[#9B9B9B]">
                   {memory.date}
                 </Text>
-                <Text className="mt-2 text-[16px] leading-[28px] text-black">
+                <Text className="mt-2 text-[16px] font-regular leading-[28px] text-black">
                   {memory.question}
                 </Text>
               </View>

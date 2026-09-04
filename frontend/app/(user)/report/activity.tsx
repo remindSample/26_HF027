@@ -92,7 +92,7 @@ export default function ActivityReportScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#F0F8FF]">
+    <View className="flex-1 bg-[#FDF2EC]">
       <Header title="활동 리포트" />
 
       <ScrollView

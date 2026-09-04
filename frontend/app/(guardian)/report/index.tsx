@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
@@ -14,32 +15,27 @@ export default function ReportMainScreen() {
         contentContainerClassName="p-5 gap-4"
         showsVerticalScrollIndicator={false}
       >
-        {/* 월 선택 */}
-        <View
-          className="flex-row items-center bg-white rounded-xl p-3.5 gap-2.5"
-          style={{ elevation: 1 }}
-        >
-          <Text className="text-lg">📅</Text>
-          <Text className="text-base font-semibold text-[#333333]">
-            {CURRENT_MONTH} 리포트
-          </Text>
-        </View>
-
-        {/* 코멘트 카드 */}
-        <View
-          className="flex-row bg-white rounded-xl p-4 items-center gap-3.5"
-          style={{ elevation: 1 }}
-        >
-          <View className="w-16 h-16 bg-[#D9D9D9] rounded-lg" />
-          <View className="flex-1 gap-2">
-            <Text className="text-[15px] font-medium text-[#222222] leading-[22px]">
-              최근 답변 참여가{"\n"}안정적이에요!
-            </Text>
-            <View className="self-start bg-[#B7E4C7] rounded-md px-2.5 py-[3px]">
-              <Text className="text-xs font-semibold text-[#1B5E20]">
+        {/* 월 리포트 요약 */}
+        <View className="overflow-hidden border-2 border-black bg-[#FFF9F5]">
+          <View className="flex-row items-center justify-between bg-[#FDF2EC] px-4 py-6 border-b-2 border-black">
+            <View className="flex-row items-center gap-2.5">
+              <Ionicons name="calendar-outline" size={28} color="#242428" />
+              <Text className="text-[24px] font-medium text-[#111111]">
+                {CURRENT_MONTH} 리포트
+              </Text>
+            </View>
+            <View className="border border-[#8A8A8A] rounded-lg px-4 py-2">
+              <Text className="text-[16px] font-medium text-[#111111]">
                 2/2 완료
               </Text>
             </View>
+          </View>
+
+          <View className="flex-row bg-[#FFFDFB] px-4 py-10 items-center gap-6">
+            <View className="w-[104px] h-[86px] bg-[#D9D9D9] rounded-lg" />
+            <Text className="flex-1 text-[25px] font-medium text-[#111111] leading-[34px]">
+              최근 답변 참여가{"\n"}안정적이에요!
+            </Text>
           </View>
         </View>
 
