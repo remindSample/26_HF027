@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image as ExpoImage } from "expo-image";
 import { Link } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
-import { getAuthSession, getCurrentUserId, getRecentAnswers } from "@/apis";
+import { getAuthSession, getRecentAnswers } from "@/apis";
 import Ic_Game3 from "../../assets/Icon/Ic_Game3.png";
 import IcSettings from "../../assets/Icon/Ic_Settings2.png";
 
@@ -38,29 +39,21 @@ const ONBOARDING_STEPS = [
   },
 ];
 
-function getOnboardingStorageKey() {
-  return `${ONBOARDING_STORAGE_KEY_PREFIX}:${getCurrentUserId()}`;
+function getOnboardingStorageKey(userId: number) {
+  return `${ONBOARDING_STORAGE_KEY_PREFIX}:${userId}`;
 }
 
-function hasSeenOnboarding() {
-  if (typeof window === "undefined" || !("localStorage" in window)) {
-    return false;
-  }
-
+async function hasSeenOnboarding(userId: number) {
   try {
-    return window.localStorage.getItem(getOnboardingStorageKey()) === "true";
+    return await AsyncStorage.getItem(getOnboardingStorageKey(userId)) === "true";
   } catch {
     return false;
   }
 }
 
-function markOnboardingAsSeen() {
-  if (typeof window === "undefined" || !("localStorage" in window)) {
-    return;
-  }
-
+async function markOnboardingAsSeen(userId: number) {
   try {
-    window.localStorage.setItem(getOnboardingStorageKey(), "true");
+    await AsyncStorage.setItem(getOnboardingStorageKey(userId), "true");
   } catch {
     // 저장에 실패해도 온보딩 닫기 동작은 유지합니다.
   }
@@ -82,9 +75,9 @@ function formatMemoryDate(value: string) {
 
 export default function HomeScreen() {
   const [onboardingStep, setOnboardingStep] = useState(0);
-  const [isOnboardingVisible, setIsOnboardingVisible] = useState(
-    () => !hasSeenOnboarding(),
-  );
+  const [isOnboardingVisible, setIsOnboardingVisible] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [currentUserName, setCurrentUserName] = useState("사용자");
   const [recentMemories, setRecentMemories] = useState<RecentMemory[]>([]);
   const [isRecentMemoriesLoading, setIsRecentMemoriesLoading] = useState(true);
   const [recentMemoriesError, setRecentMemoriesError] = useState<string | null>(
@@ -92,7 +85,34 @@ export default function HomeScreen() {
   );
   const currentOnboardingStep = ONBOARDING_STEPS[onboardingStep];
   const isLastOnboardingStep = onboardingStep === ONBOARDING_STEPS.length - 1;
-  const currentUserName = getAuthSession()?.user.name ?? "사용자";
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSessionState() {
+      const session = await getAuthSession();
+
+      if (!isMounted || !session) {
+        return;
+      }
+
+      const didSeeOnboarding = await hasSeenOnboarding(session.user.id);
+
+      if (!isMounted) {
+        return;
+      }
+
+      setCurrentUserId(session.user.id);
+      setCurrentUserName(session.user.name);
+      setIsOnboardingVisible(!didSeeOnboarding);
+    }
+
+    loadSessionState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -140,7 +160,10 @@ export default function HomeScreen() {
   }, []);
 
   const closeOnboarding = () => {
-    markOnboardingAsSeen();
+    if (currentUserId !== null) {
+      markOnboardingAsSeen(currentUserId);
+    }
+
     setIsOnboardingVisible(false);
   };
 

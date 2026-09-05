@@ -131,14 +131,14 @@ function WeekMemoryRow({
     >
       <View className="w-[58px] items-center">
         <Text className="text-[17px] font-medium text-black">{day.weekday}</Text>
-        <Text className="text-[26px] font-medium text-black">{day.day}</Text>
+        <Text className="text-[24px] font-medium text-black">{day.day}</Text>
       </View>
 
       {hasMemory && memory ? (
         <>
           <View className="ml-7 flex-1">
             <Text
-              className="text-[20px] font-medium leading-[28px] text-black"
+              className="text-[18px] font-medium leading-[28px] text-black"
               numberOfLines={1}
             >
               {memory.question}
@@ -150,7 +150,7 @@ function WeekMemoryRow({
           <Ionicons name="copy-outline" size={37} color="#6B6255" />
         </>
       ) : (
-        <Text className="ml-7 flex-1 text-[24px] font-medium text-[#777777]">
+        <Text className="ml-7 flex-1 text-[18px] font-medium text-[#777777]">
           기록 없음
         </Text>
       )}
@@ -213,7 +213,7 @@ export default function GuardianMemoryWeekScreen() {
                 <Ionicons name="chevron-back" size={31} color="#ffffff" />
               </Pressable>
 
-              <Text className="text-[29px] font-medium text-black">
+              <Text className="text-[24px] font-medium text-black">
                 {titleYear}년 {titleMonth}월 {titleWeek}주차
               </Text>
 

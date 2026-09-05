@@ -74,7 +74,7 @@ export default function LoginScreen() {
 
     try {
       const data = await loginUser({ identifier: id.trim(), password });
-      setAuthSession(data);
+      await setAuthSession(data);
 
       if (data.user.role === "USER") {
         router.replace("/(user)");
