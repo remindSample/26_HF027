@@ -54,22 +54,37 @@ export default function GalleryAnswerScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#F0F8FF]">
+    <View className="flex-1 bg-[#FDF2EC]">
       <Header title="갤러리에서 가져오기" />
 
       <View className="flex-1 p-5 gap-4">
-        <View className="bg-white rounded-[14px] p-4 gap-2" style={{ elevation: 1 }}>
-          <Text className="text-[13px] text-[#5BA4A4] font-semibold">오늘의 질문</Text>
-          <Text className="text-[15px] text-[#222222] leading-[23px]">
+        <View className="mt-7 bg-[#FFFBF7] p-5 gap-2.5 border-2 border-black" 
+        style={{
+                elevation: 3,
+                shadowColor: "#000000",
+                shadowOffset: { width: 3, height: 3 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+              }}>
+          <Text className="text-[16px] text-[#5BA4A4] font-semibold">오늘의 질문</Text>
+          <Text className="text-[20px] text-[#222222] leading-[23px]">
             {questionText ?? "질문을 불러오지 못했습니다."}
           </Text>
         </View>
 
+
         <Pressable
-          className="h-14 rounded-xl bg-[#5BA4A4] items-center justify-center"
+          className="mt-10 h-14 rounded-[14px] bg-[#FFFBF7] items-center border-2 border-black justify-center"
+          style={{
+                elevation: 3,
+                shadowColor: "#000000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+              }}
           onPress={pickImage}
         >
-          <Text className="text-white text-[16px] font-semibold">이미지 선택하기</Text>
+          <Text className="text-black text-[16px] font-semibold">이미지 선택하기</Text>
         </Pressable>
 
         {imageUri ? (
