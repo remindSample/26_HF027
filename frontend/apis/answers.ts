@@ -30,6 +30,10 @@ export type AnswerResponse = {
   answered_at: string;
 };
 
+export type RecentAnswerResponse = AnswerResponse & {
+  question_content: string;
+};
+
 export type MonthlyAnswerReport = {
   year: number;
   month: number;
@@ -61,5 +65,11 @@ export function getMonthlyAnswerReport(
 ) {
   return apiRequest<MonthlyAnswerReport>(
     `/answers/report?year=${year}&month=${month}&user_id=${userId}`
+  );
+}
+
+export function getRecentAnswers(limit = 5, userId = getCurrentUserId()) {
+  return apiRequest<RecentAnswerResponse[]>(
+    `/answers/recent?user_id=${userId}&limit=${limit}`
   );
 }

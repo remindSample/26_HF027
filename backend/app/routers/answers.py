@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from openai import OpenAI
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.answer import AnswerCreate, AnswerResponse, MonthlyAnswerReport
-from app.crud.answer_crud import create_answer, get_answers_by_month
+from app.schemas.answer import AnswerCreate, AnswerResponse, MonthlyAnswerReport, RecentAnswerResponse
+from app.crud.answer_crud import create_answer, get_answers_by_month, get_recent_answers
 from app.crud.question_crud import get as get_question
 from app.routers.auth import get_current_user
 
@@ -22,6 +22,23 @@ router = APIRouter(prefix="/answers", tags=["answers"])
 @router.post("", response_model=AnswerResponse, status_code=201)
 def submit_answer(data: AnswerCreate, db: Session = Depends(get_db)):
     return create_answer(db, data)
+
+
+@router.get("/recent", response_model=list[RecentAnswerResponse])
+def get_recent_answer_list(
+    user_id: int | None = None,
+    limit: int = 5,
+    db: Session = Depends(get_db),
+):
+    limited_count = min(max(limit, 1), 5)
+    rows = get_recent_answers(db, user_id, limited_count)
+    return [
+        RecentAnswerResponse(
+            **AnswerResponse.model_validate(answer).model_dump(),
+            question_content=question_content,
+        )
+        for answer, question_content in rows
+    ]
 
 
 @router.post("/upload-image", response_model=AnswerResponse, status_code=201)
