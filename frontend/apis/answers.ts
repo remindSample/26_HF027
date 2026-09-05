@@ -46,30 +46,36 @@ export type MonthlyAnswerReport = {
   ai_comment: string;
 };
 
-export function submitAnswer(payload: AnswerPayload) {
+export async function submitAnswer(payload: AnswerPayload) {
+  const userId = payload.user_id ?? await getCurrentUserId();
+
   return apiRequest<AnswerResponse>("/answers", {
     method: "POST",
     body: JSON.stringify({
-      user_id: payload.user_id ?? getCurrentUserId(),
       input_type: "text",
       is_private: false,
       ...payload,
+      user_id: userId,
     }),
   });
 }
 
-export function getMonthlyAnswerReport(
+export async function getMonthlyAnswerReport(
   year: number,
   month: number,
-  userId = getCurrentUserId()
+  userId?: number
 ) {
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
   return apiRequest<MonthlyAnswerReport>(
-    `/answers/report?year=${year}&month=${month}&user_id=${userId}`
+    `/answers/report?year=${year}&month=${month}&user_id=${resolvedUserId}`
   );
 }
 
-export function getRecentAnswers(limit = 5, userId = getCurrentUserId()) {
+export async function getRecentAnswers(limit = 5, userId?: number) {
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
   return apiRequest<RecentAnswerResponse[]>(
-    `/answers/recent?user_id=${userId}&limit=${limit}`
+    `/answers/recent?user_id=${resolvedUserId}&limit=${limit}`
   );
 }

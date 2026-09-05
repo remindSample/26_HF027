@@ -12,10 +12,12 @@ export type GameSessionResponse = {
 export type GameGesture = "FIST" | "PALM";
 export type GameHand = "LEFT" | "RIGHT";
 
-export function startGameSession(level: number, userId = getCurrentUserId()) {
+export async function startGameSession(level: number, userId?: number) {
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
   return apiRequest<GameSessionResponse>("/game/sessions", {
     method: "POST",
-    body: JSON.stringify({ user_id: userId, level }),
+    body: JSON.stringify({ user_id: resolvedUserId, level }),
   });
 }
 

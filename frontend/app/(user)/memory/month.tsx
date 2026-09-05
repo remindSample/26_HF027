@@ -389,7 +389,8 @@ export default function GuardianMemoryMonthScreen() {
                   return (
                     <View
                       key={`${day ?? "empty"}-${index}`}
-                      className="w-[14.2857%] p-[4px]"
+                      className="p-[4px]"
+                      style={{ width: `${100 / 7}%` }}
                     >
                       <Pressable
                         className={`aspect-square items-center justify-center rounded-[16px] bg-white ${
