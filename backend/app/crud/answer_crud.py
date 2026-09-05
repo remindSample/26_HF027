@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
 from app.models.answer import Answer
+from app.models.question import Question
 from app.schemas.answer import AnswerCreate
 from app.services.text_analysis import analyze
 
@@ -48,3 +49,13 @@ def get_answers_by_month(
     if user_id is not None:
         q = q.filter(Answer.user_id == user_id)
     return q.order_by(Answer.answered_at).all()
+
+
+def get_recent_answers(db: Session, user_id: int | None, limit: int = 5):
+    q = db.query(Answer, Question.content.label("question_content")).join(
+        Question,
+        Answer.question_id == Question.id,
+    )
+    if user_id is not None:
+        q = q.filter(Answer.user_id == user_id)
+    return q.order_by(Answer.answered_at.desc()).limit(limit).all()

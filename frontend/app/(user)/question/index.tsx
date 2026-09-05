@@ -158,7 +158,7 @@ export default function QuestionScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#F0F8FF]">
+    <View className="flex-1 bg-[#FDF2EC]">
 
       {/*상단바*/}
       <Header title="오늘의 질문"/>
@@ -168,10 +168,10 @@ export default function QuestionScreen() {
         contentContainerClassName="p-5 gap-3.5"
         showsVerticalScrollIndicator={false}
       >
-        <Text className="text-[15px] font-semibold text-[#333333]">
+        <Text className="text-[20px] font-semibold text-[#333333]">
           {formatToday(today)}
         </Text>
-        <Text className="text-[13px] text-[#5BA4A4] font-semibold mb-1">
+        <Text className="text-[15px] text-[#174C33] font-semibold mb-1">
           해시태그를 누르면 오늘의 질문이 생성돼요.
         </Text>
 

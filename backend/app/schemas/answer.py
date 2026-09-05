@@ -30,6 +30,9 @@ class AnswerResponse(BaseModel):
     answered_at: datetime
     model_config = {"from_attributes": True}
 
+class RecentAnswerResponse(AnswerResponse):
+    question_content: str
+
 class MonthlyAnswerReport(BaseModel):
     year: int
     month: int

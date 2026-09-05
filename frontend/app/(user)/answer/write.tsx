@@ -80,18 +80,25 @@ export default function WriteAnswerScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#F0F8FF]">
+    <View className="flex-1 bg-[#FDF2EC]">
       <Header title="텍스트로 입력하기" />
 
       <View className="flex-1 p-5 gap-4">
-        <View className="bg-white rounded-[14px] p-4 gap-2" style={{ elevation: 1 }}>
-          <Text className="text-[13px] text-[#5BA4A4] font-semibold">오늘의 질문</Text>
-          <Text className="text-[15px] text-[#222222] leading-[23px]">
+        <View className="mt-7 bg-[#FFFBF7] p-5 gap-2.5 border-2 border-black" 
+        style={{
+                elevation: 3,
+                shadowColor: "#000000",
+                shadowOffset: { width: 3, height: 3 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+              }}>
+          <Text className="text-[16px] text-[#5BA4A4] font-semibold">오늘의 질문</Text>
+          <Text className="text-[20px] text-[#222222] leading-[23px]">
             {questionText ?? "질문을 불러오지 못했습니다."}
           </Text>
         </View>
 
-        <View className="bg-white rounded-[14px] p-4 gap-3" style={{ elevation: 1 }}>
+        <View className="mt-10 bg-white rounded-[14px] p-4 gap-3" style={{ elevation: 1 }}>
           <TextInput
             className="min-h-36 rounded-xl border border-[#D9EAEA] px-4 py-3 text-[15px] text-[#222222]"
             multiline
@@ -103,13 +110,20 @@ export default function WriteAnswerScreen() {
           />
 
           <Pressable
-            className={`h-12 rounded-xl items-center justify-center ${
-              isSubmitting ? "bg-[#9BCBCB]" : "bg-[#5BA4A4]"
+            className={`h-12 rounded-xl items-center border-2 border-black justify-center ${
+              isSubmitting ? "bg-[#F9EBDF]" : "bg-[#FDF2EC]"
             }`}
+            style={{
+              elevation: 4,
+              shadowColor: "#000000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 1,
+              shadowRadius: 0,
+            }}
             onPress={() => submitAnswer(draft)}
             disabled={isSubmitting}
           >
-            <Text className="text-white font-semibold">
+            <Text className="text-black">
               {isSubmitting ? "저장 중..." : "저장하기"}
             </Text>
           </Pressable>

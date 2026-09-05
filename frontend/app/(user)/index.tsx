@@ -1,23 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image as ExpoImage } from "expo-image";
 import { Link } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
-import { getAuthSession, getCurrentUserId } from "@/apis";
+import { getAuthSession, getCurrentUserId, getRecentAnswers } from "@/apis";
 import Ic_Game3 from "../../assets/Icon/Ic_Game3.png";
 import IcSettings from "../../assets/Icon/Ic_Settings2.png";
 
 const ONBOARDING_STORAGE_KEY_PREFIX = "remind_user_onboarding_seen";
-const RECENT_MEMORIES = [
-  {
-    date: "2026.03.29",
-    question: "어린시절 가장 기억에 남는 친구는 누구였나요?",
-  },
-  {
-    date: "2026.03.29",
-    question: "가장 행복했던 여행지는 어디였나요?",
-  },
-];
+type RecentMemory = {
+  id: number;
+  date: string;
+  question: string;
+};
 
 const ONBOARDING_STEPS = [
   {
@@ -71,14 +66,78 @@ function markOnboardingAsSeen() {
   }
 }
 
+function formatMemoryDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}.${month}.${day}`;
+}
+
 export default function HomeScreen() {
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [isOnboardingVisible, setIsOnboardingVisible] = useState(
     () => !hasSeenOnboarding(),
   );
+  const [recentMemories, setRecentMemories] = useState<RecentMemory[]>([]);
+  const [isRecentMemoriesLoading, setIsRecentMemoriesLoading] = useState(true);
+  const [recentMemoriesError, setRecentMemoriesError] = useState<string | null>(
+    null,
+  );
   const currentOnboardingStep = ONBOARDING_STEPS[onboardingStep];
   const isLastOnboardingStep = onboardingStep === ONBOARDING_STEPS.length - 1;
   const currentUserName = getAuthSession()?.user.name ?? "사용자";
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRecentMemories() {
+      try {
+        setIsRecentMemoriesLoading(true);
+        setRecentMemoriesError(null);
+        const answers = await getRecentAnswers(5);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setRecentMemories(
+          answers.map((answer) => ({
+            id: answer.id,
+            date: formatMemoryDate(answer.answered_at),
+            question: answer.question_content,
+          })),
+        );
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "최근 기억을 불러오지 못했습니다.";
+
+        setRecentMemoriesError(
+          message.toLowerCase().includes("not found") ? "최근 기억 없음" : message,
+        );
+      } finally {
+        if (isMounted) {
+          setIsRecentMemoriesLoading(false);
+        }
+      }
+    }
+
+    loadRecentMemories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const closeOnboarding = () => {
     markOnboardingAsSeen();
@@ -223,19 +282,41 @@ export default function HomeScreen() {
           </View>
 
           <View className="gap-[30px]">
-            {RECENT_MEMORIES.map((memory) => (
+            {isRecentMemoriesLoading ? (
               <View
-                key={memory.question}
                 className="min-h-[86px] justify-center rounded-[14px] bg-[#FAEDE0] px-[24px] py-[18px]"
               >
-                <Text className="text-[16px] font-regular text-[#9B9B9B]">
-                  {memory.date}
-                </Text>
-                <Text className="mt-2 text-[16px] font-regular leading-[28px] text-black">
-                  {memory.question}
+                <Text className="text-[16px] font-regular leading-[28px] text-[#9B9B9B]">
+                  최근 기억을 불러오는 중입니다.
                 </Text>
               </View>
-            ))}
+            ) : recentMemoriesError ? (
+              <View className="min-h-[86px] justify-center rounded-[14px] bg-[#FAEDE0] px-[24px] py-[18px]">
+                <Text className="text-[16px] font-regular leading-[28px] text-[#9B9B9B]">
+                  {recentMemoriesError}
+                </Text>
+              </View>
+            ) : recentMemories.length === 0 ? (
+              <View className="min-h-[86px] justify-center rounded-[14px] bg-[#FAEDE0] px-[24px] py-[18px]">
+                <Text className="text-[16px] font-regular leading-[28px] text-[#9B9B9B]">
+                  최근 기억 없음
+                </Text>
+              </View>
+            ) : (
+              recentMemories.map((memory) => (
+                <View
+                  key={memory.id}
+                  className="min-h-[86px] justify-center rounded-[14px] bg-[#FAEDE0] px-[24px] py-[18px]"
+                >
+                  <Text className="text-[16px] font-regular text-[#9B9B9B]">
+                    {memory.date}
+                  </Text>
+                  <Text className="mt-2 text-[16px] font-regular leading-[28px] text-black">
+                    {memory.question}
+                  </Text>
+                </View>
+              ))
+            )}
           </View>
         </View>
       </ScrollView>
