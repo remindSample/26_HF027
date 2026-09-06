@@ -1,7 +1,7 @@
 import Header from "@/components/Header";
-import { submitAnswer as submitAnswerToApi } from "@/apis";
+import { uploadImageAnswer } from "@/apis";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import { Alert, Image, Pressable, Text, View } from "react-native";
 
@@ -28,11 +28,13 @@ export default function CameraAnswerScreen() {
     setImageUri(nextImageUri);
     setIsSubmitting(true);
     try {
-      await submitAnswerToApi({
-        question_id: parsedQuestionId,
-        input_type: "handwriting",
-        image_url: nextImageUri,
+      await uploadImageAnswer({
+        questionId: parsedQuestionId,
+        imageUri: nextImageUri,
       });
+      Alert.alert("알림", "답변이 등록되었습니다!", [
+        { text: "확인", onPress: () => router.back() },
+      ]);
     } catch (error) {
       Alert.alert(
         "알림",

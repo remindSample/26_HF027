@@ -1,5 +1,5 @@
-import { apiRequest } from "./client";
-import { getCurrentUserId } from "./session";
+import { apiRequest, apiUpload } from "./client";
+import { getAuthSession, getCurrentUserId } from "./session";
 
 export type AnswerPayload = {
   user_id?: number;
@@ -78,4 +78,27 @@ export async function getRecentAnswers(limit = 5, userId?: number) {
   return apiRequest<RecentAnswerResponse[]>(
     `/answers/recent?user_id=${resolvedUserId}&limit=${limit}`
   );
+}
+
+export async function uploadImageAnswer({
+  questionId,
+  imageUri,
+  isPrivate = false,
+}: {
+  questionId: number;
+  imageUri: string;
+  isPrivate?: boolean;
+}) {
+  const formData = new FormData();
+  const imageResponse = await fetch(imageUri);
+  const imageBlob = await imageResponse.blob();
+  formData.append("image", imageBlob, "answer.jpg");
+  formData.append("question_id", String(questionId));
+  formData.append("is_private", String(isPrivate));
+
+  const session = await getAuthSession();
+
+  return apiUpload<AnswerResponse>("/answers/upload-image", formData, {
+    authToken: session?.access_token,
+  });
 }
