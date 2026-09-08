@@ -13,9 +13,7 @@ def create_answer(db: Session, data: AnswerCreate) -> Answer:
     if text_to_analyze:
         metrics = analyze(text_to_analyze)
 
-    sentiment = metrics.get("sentiment", {})
     word_count = metrics.get("word_count", 0)
-    unique_word_count = metrics.get("unique_word_count", 0)
 
     answer = Answer(
         user_id=data.user_id,
@@ -29,9 +27,9 @@ def create_answer(db: Session, data: AnswerCreate) -> Answer:
         sentence_count=metrics.get("sentence_count") or None,
         avg_sentence_length=metrics.get("avg_sentence_length") or None,
         unique_word_ratio=metrics.get("unique_word_ratio") or None,
-        repeated_word_count=(word_count - unique_word_count) if word_count else None,
-        positive_score=round(sentiment.get("positive", 0) / 10) or None,
-        negative_score=round(sentiment.get("negative", 0) / 10) or None,
+        repeated_word_count=metrics.get("repeated_word_count"),
+        positive_score=metrics.get("positive_score"),
+        negative_score=metrics.get("negative_score"),
     )
     db.add(answer)
     db.commit()
