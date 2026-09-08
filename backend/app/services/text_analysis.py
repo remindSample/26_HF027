@@ -12,8 +12,15 @@ load_dotenv()
 
 BASELINE_PATH = Path(__file__).parent.parent / "data" / "baseline.csv"
 
-_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+_client: OpenAI | None = None
 SENTIMENT_MODEL = "gpt-4o-mini"
+
+
+def _get_client() -> OpenAI:
+    global _client
+    if _client is None:
+        _client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    return _client
 
 
 def _load_baseline() -> dict:
@@ -67,7 +74,7 @@ def _score_sentiment(text: str) -> dict:
     )
 
     try:
-        resp = _client.chat.completions.create(
+        resp = _get_client().chat.completions.create(
             model=SENTIMENT_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
