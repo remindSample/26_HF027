@@ -60,16 +60,15 @@ _BASELINE = _load_baseline()
 
 
 def _score_sentiment(text: str) -> dict:
-    """OpenAI로 긍정/부정 점수(0~100)를 판단한다. 실패 시 (0, 0)."""
+    """OpenAI로 긍정/중립/부정 점수(합 100)를 판단하고 positive/negative만 반환한다. 실패 시 (0, 0)."""
     if not text or len(text.strip()) < 2:
         return {"positive_score": 0, "negative_score": 0}
 
     prompt = (
         "다음은 한 어르신이 작성한 답변입니다. 이 답변에 담긴 감정을 분석해서 "
-        "긍정 점수와 부정 점수를 각각 0~100 사이 정수로 매겨주세요. "
-        "두 점수가 반드시 합쳐서 100일 필요는 없습니다 (예: 담담한 답변은 둘 다 낮을 수 있음).\n"
+        "긍정/중립/부정 점수를 각각 0~100 사이 정수로 매기되, 세 점수의 합이 반드시 100이 되도록 하세요.\n"
         "반드시 아래 JSON 형식으로만 답하세요. 다른 설명은 붙이지 마세요.\n"
-        '{"positive_score": 정수, "negative_score": 정수}\n\n'
+        '{"positive_score": 정수, "neutral_score": 정수, "negative_score": 정수}\n\n'
         f"답변: {text}"
     )
 
@@ -82,9 +81,22 @@ def _score_sentiment(text: str) -> dict:
             response_format={"type": "json_object"},
         )
         result = json.loads(resp.choices[0].message.content)
-        positive_score = max(0, min(100, int(result.get("positive_score", 0))))
-        negative_score = max(0, min(100, int(result.get("negative_score", 0))))
-        return {"positive_score": positive_score, "negative_score": negative_score}
+        scores = {
+            "positive_score": max(0, min(100, int(result.get("positive_score", 0)))),
+            "neutral_score": max(0, min(100, int(result.get("neutral_score", 0)))),
+            "negative_score": max(0, min(100, int(result.get("negative_score", 0)))),
+        }
+
+        # 세 점수의 합이 100이 아니면 가장 큰 값을 보정해서 합을 100으로 맞춘다
+        diff = 100 - sum(scores.values())
+        if diff != 0:
+            largest_key = max(scores, key=scores.get)
+            scores[largest_key] += diff
+
+        return {
+            "positive_score": scores["positive_score"],
+            "negative_score": scores["negative_score"],
+        }
     except Exception as e:
         print(f"[text_analysis] 감정분석 실패, 0/0으로 대체: {e}")
         return {"positive_score": 0, "negative_score": 0}
