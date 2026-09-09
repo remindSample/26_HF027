@@ -10,10 +10,12 @@ export default function AnswerMethodScreen() {
   }>();
 
   const goTo = (method: "camera" | "gallery" | "write") => {
+    console.log("goTo called:", method);
     router.push({
       pathname: `/answer/${method}`,
       params: { questionId, qType, questionText },
     } as Href);
+    console.log("router.push done for:", method);
   };
 
   return (

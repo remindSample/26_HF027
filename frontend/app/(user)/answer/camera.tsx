@@ -33,7 +33,7 @@ export default function CameraAnswerScreen() {
         imageUri: nextImageUri,
       });
       Alert.alert("알림", "답변이 등록되었습니다!", [
-        { text: "확인", onPress: () => router.back() },
+        { text: "확인", onPress: () => router.push("/question") },
       ]);
     } catch (error) {
       Alert.alert(
