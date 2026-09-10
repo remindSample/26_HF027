@@ -41,5 +41,10 @@ class MonthlyAnswerReport(BaseModel):
     avg_word_count: float
     avg_sentence_count: float
     avg_complexity_score: float
+    avg_unique_word_ratio: float
     sentiment_summary: dict
+    has_last_month_data: bool
+    word_count_diff_pct: float | None
+    unique_word_ratio_diff_pct: float | None
+    positive_score_diff_pct: float | None
     ai_comment: str
