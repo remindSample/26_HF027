@@ -48,6 +48,7 @@ export type MonthlyAnswerReport = {
   word_count_diff_pct: number | null;
   unique_word_ratio_diff_pct: number | null;
   positive_score_diff_pct: number | null;
+  complexity_diff_pct: number | null;
   ai_comment: string;
 };
 
