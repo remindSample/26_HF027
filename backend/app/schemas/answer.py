@@ -47,4 +47,5 @@ class MonthlyAnswerReport(BaseModel):
     word_count_diff_pct: float | None
     unique_word_ratio_diff_pct: float | None
     positive_score_diff_pct: float | None
+    complexity_diff_pct: float | None
     ai_comment: str

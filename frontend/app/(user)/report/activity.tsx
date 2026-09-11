@@ -4,23 +4,36 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 
-// 데모용 mock 데이터 (실제 API 연결 시 교체)
+// 데모용 mock 데이터 (게임 API 연동 전까지 유지)
 const MOCK_DATA = {
   score: 88,
   mission_rate: 94,
-  comment:
-    "이번 달은 어휘력이 지난달 대비 12% 향상됐습니다. 꾸준한 활동이 도움이 되고 있어요!",
-  word_count: 197,
-  word_diff: 22,
-  complexity: 85,
-  complexity_diff: 17,
 };
 
 const CALENDAR_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
+function formatDiffPct(pct: number | null) {
+  if (pct === null) {
+    return "지난달 데이터 없음";
+  }
+  const sign = pct > 0 ? "+" : "";
+  return `지난달 대비 ${sign}${pct}%`;
+}
+
+function diffColorClass(pct: number | null) {
+  if (pct === null) return "text-[#999999]";
+  if (pct < 0) return "text-[#E57373]";
+  return "text-[#5BA4A4]";
+}
+
 export default function ActivityReportScreen() {
   const [now, setNow] = useState(() => new Date());
   const [answers, setAnswers] = useState<AnswerResponse[]>([]);
+  const [aiComment, setAiComment] = useState("");
+  const [avgWordCount, setAvgWordCount] = useState(0);
+  const [wordCountDiffPct, setWordCountDiffPct] = useState<number | null>(null);
+  const [avgComplexityScore, setAvgComplexityScore] = useState(0);
+  const [complexityDiffPct, setComplexityDiffPct] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
@@ -47,10 +60,20 @@ export default function ActivityReportScreen() {
         const report = await getMonthlyAnswerReport(currentYear, currentMonth);
         if (isMounted) {
           setAnswers(report.answers);
+          setAiComment(report.ai_comment);
+          setAvgWordCount(report.avg_word_count);
+          setWordCountDiffPct(report.word_count_diff_pct);
+          setAvgComplexityScore(report.avg_complexity_score);
+          setComplexityDiffPct(report.complexity_diff_pct);
         }
       } catch {
         if (isMounted) {
           setAnswers([]);
+          setAiComment("코멘트를 불러오지 못했습니다.");
+          setAvgWordCount(0);
+          setWordCountDiffPct(null);
+          setAvgComplexityScore(0);
+          setComplexityDiffPct(null);
         }
       } finally {
         if (isMounted) {
@@ -65,6 +88,10 @@ export default function ActivityReportScreen() {
       isMounted = false;
     };
     }, [currentYear, currentMonth])
+  );
+
+  const complexityScoreOutOf100 = Math.round(
+    Math.min((avgComplexityScore / 10) * 100, 100)
   );
 
   const answersByDay = useMemo(() => {
@@ -140,7 +167,7 @@ export default function ActivityReportScreen() {
 
           <View className="bg-[#F5F5F5] rounded-[10px] p-3">
             <Text className="text-sm text-[#444444] leading-[22px]">
-              {MOCK_DATA.comment}
+              {aiComment}
             </Text>
           </View>
         </View>
@@ -211,12 +238,12 @@ export default function ActivityReportScreen() {
             className="flex-1 bg-white rounded-[14px] p-4 items-center gap-1.5"
             style={{ elevation: 1 }}
           >
-            <Text className="text-[13px] text-[#777777]">단어 점수</Text>
+            <Text className="text-[13px] text-[#777777]">평균 단어 수</Text>
             <Text className="text-[26px] font-extrabold text-[#222222]">
-              {MOCK_DATA.word_count} 개
+              {avgWordCount.toFixed(1)}개
             </Text>
-            <Text className="text-[13px] text-[#5BA4A4] font-semibold">
-              ↑{MOCK_DATA.word_diff}개 증가
+            <Text className={`text-[13px] font-semibold ${diffColorClass(wordCountDiffPct)}`}>
+              {formatDiffPct(wordCountDiffPct)}
             </Text>
           </View>
           <View
@@ -225,10 +252,10 @@ export default function ActivityReportScreen() {
           >
             <Text className="text-[13px] text-[#777777]">문장 복잡도</Text>
             <Text className="text-[26px] font-extrabold text-[#222222]">
-              {MOCK_DATA.complexity} 점
+              {complexityScoreOutOf100} 점
             </Text>
-            <Text className="text-[13px] text-[#5BA4A4] font-semibold">
-              ↑{MOCK_DATA.complexity_diff}점 증가
+            <Text className={`text-[13px] font-semibold ${diffColorClass(complexityDiffPct)}`}>
+              {formatDiffPct(complexityDiffPct)}
             </Text>
           </View>
         </View>

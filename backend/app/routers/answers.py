@@ -127,6 +127,7 @@ def get_monthly_report(
             word_count_diff_pct=None,
             unique_word_ratio_diff_pct=None,
             positive_score_diff_pct=None,
+            complexity_diff_pct=None,
             ai_comment="아직 이번 달 답변이 없습니다. 오늘의 질문에 답변해보세요!",
         )
 
@@ -150,16 +151,19 @@ def get_monthly_report(
     word_count_diff_pct: float | None = None
     unique_word_ratio_diff_pct: float | None = None
     positive_score_diff_pct: float | None = None
+    complexity_diff_pct: float | None = None
 
     if has_last_month_data:
         lm_n = len(last_month_answers)
         lm_avg_wc = round(sum(a.word_count or 0 for a in last_month_answers) / lm_n, 1)
         lm_avg_uwr = _avg_unique_word_ratio(last_month_answers)
         lm_avg_pos = round(sum(a.positive_score or 0 for a in last_month_answers) / lm_n, 1)
+        lm_avg_cx = round(sum(a.avg_sentence_length or 0 for a in last_month_answers) / lm_n, 1)
 
         word_count_diff_pct = _pct_diff(avg_wc, lm_avg_wc)
         unique_word_ratio_diff_pct = _pct_diff(avg_uwr, lm_avg_uwr)
         positive_score_diff_pct = _pct_diff(avg_pos, lm_avg_pos)
+        complexity_diff_pct = _pct_diff(avg_cx, lm_avg_cx)
 
         comment_parts = []
         if word_count_diff_pct is not None and word_count_diff_pct > 0:
@@ -190,5 +194,6 @@ def get_monthly_report(
         word_count_diff_pct=word_count_diff_pct,
         unique_word_ratio_diff_pct=unique_word_ratio_diff_pct,
         positive_score_diff_pct=positive_score_diff_pct,
+        complexity_diff_pct=complexity_diff_pct,
         ai_comment=ai_comment,
     )
