@@ -5,7 +5,15 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from openai import OpenAI
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.answer import AnswerCreate, AnswerResponse, MonthlyAnswerReport, RecentAnswerResponse
+from app.schemas.answer import (
+    AnswerCreate,
+    AnswerResponse,
+    MonthlyAnswerReport,
+    MonthlyHistoryAverage,
+    MonthlyHistoryItem,
+    MonthlyHistoryResponse,
+    RecentAnswerResponse,
+)
 from app.crud.answer_crud import create_answer, get_answers_by_month, get_recent_answers
 from app.crud.question_crud import get as get_question
 from app.routers.auth import get_current_user
@@ -196,4 +204,59 @@ def get_monthly_report(
         positive_score_diff_pct=positive_score_diff_pct,
         complexity_diff_pct=complexity_diff_pct,
         ai_comment=ai_comment,
+    )
+
+
+@router.get("/report/history", response_model=MonthlyHistoryResponse)
+def get_monthly_history(
+    user_id: int | None = None,
+    months: int = 4,
+    db: Session = Depends(get_db),
+):
+    now = datetime.utcnow()
+    year, month = now.year, now.month
+
+    items: list[MonthlyHistoryItem] = []
+    for i in range(months):
+        m = month - i
+        y = year
+        while m <= 0:
+            m += 12
+            y -= 1
+
+        month_answers = get_answers_by_month(db, user_id, y, m)
+        if month_answers:
+            n = len(month_answers)
+            avg_wc = round(sum(a.word_count or 0 for a in month_answers) / n, 1)
+            avg_cx = round(sum(a.avg_sentence_length or 0 for a in month_answers) / n, 1)
+            items.append(MonthlyHistoryItem(
+                year=y,
+                month=m,
+                avg_word_count=avg_wc,
+                avg_complexity_score=avg_cx,
+                has_data=True,
+            ))
+        else:
+            items.append(MonthlyHistoryItem(
+                year=y,
+                month=m,
+                avg_word_count=None,
+                avg_complexity_score=None,
+                has_data=False,
+            ))
+
+    data_items = [item for item in items if item.has_data]
+    if data_items:
+        avg_word_count = round(sum(item.avg_word_count for item in data_items) / len(data_items), 1)
+        avg_complexity_score = round(sum(item.avg_complexity_score for item in data_items) / len(data_items), 1)
+    else:
+        avg_word_count = None
+        avg_complexity_score = None
+
+    return MonthlyHistoryResponse(
+        months=items,
+        average=MonthlyHistoryAverage(
+            avg_word_count=avg_word_count,
+            avg_complexity_score=avg_complexity_score,
+        ),
     )

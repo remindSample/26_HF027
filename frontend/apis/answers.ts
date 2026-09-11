@@ -86,6 +86,32 @@ export async function getRecentAnswers(limit = 5, userId?: number) {
   );
 }
 
+export type MonthlyHistoryItem = {
+  year: number;
+  month: number;
+  avg_word_count: number | null;
+  avg_complexity_score: number | null;
+  has_data: boolean;
+};
+
+export type MonthlyHistoryAverage = {
+  avg_word_count: number | null;
+  avg_complexity_score: number | null;
+};
+
+export type MonthlyHistoryResponse = {
+  months: MonthlyHistoryItem[];
+  average: MonthlyHistoryAverage;
+};
+
+export async function getAnswerReportHistory(months = 4, userId?: number) {
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
+  return apiRequest<MonthlyHistoryResponse>(
+    `/answers/report/history?user_id=${resolvedUserId}&months=${months}`
+  );
+}
+
 export async function uploadImageAnswer({
   questionId,
   imageUri,
