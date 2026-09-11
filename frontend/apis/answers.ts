@@ -42,7 +42,12 @@ export type MonthlyAnswerReport = {
   avg_word_count: number;
   avg_sentence_count: number;
   avg_complexity_score: number;
+  avg_unique_word_ratio: number;
   sentiment_summary: Record<string, number>;
+  has_last_month_data: boolean;
+  word_count_diff_pct: number | null;
+  unique_word_ratio_diff_pct: number | null;
+  positive_score_diff_pct: number | null;
   ai_comment: string;
 };
 

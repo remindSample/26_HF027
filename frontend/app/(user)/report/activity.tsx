@@ -8,8 +8,6 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "rea
 const MOCK_DATA = {
   score: 88,
   mission_rate: 94,
-  comment:
-    "이번 달은 어휘력이 지난달 대비 12% 향상됐습니다. 꾸준한 활동이 도움이 되고 있어요!",
   word_count: 197,
   word_diff: 22,
   complexity: 85,
@@ -21,6 +19,7 @@ const CALENDAR_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 export default function ActivityReportScreen() {
   const [now, setNow] = useState(() => new Date());
   const [answers, setAnswers] = useState<AnswerResponse[]>([]);
+  const [aiComment, setAiComment] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
@@ -47,10 +46,12 @@ export default function ActivityReportScreen() {
         const report = await getMonthlyAnswerReport(currentYear, currentMonth);
         if (isMounted) {
           setAnswers(report.answers);
+          setAiComment(report.ai_comment);
         }
       } catch {
         if (isMounted) {
           setAnswers([]);
+          setAiComment("코멘트를 불러오지 못했습니다.");
         }
       } finally {
         if (isMounted) {
@@ -140,7 +141,7 @@ export default function ActivityReportScreen() {
 
           <View className="bg-[#F5F5F5] rounded-[10px] p-3">
             <Text className="text-sm text-[#444444] leading-[22px]">
-              {MOCK_DATA.comment}
+              {aiComment}
             </Text>
           </View>
         </View>

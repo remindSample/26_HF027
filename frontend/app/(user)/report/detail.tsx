@@ -1,7 +1,9 @@
-import { router } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 
 import Header from "@/components/Header";
+import { getMonthlyAnswerReport } from "@/apis";
 
 // 데모용 mock 데이터
 const WORD_USAGE = [
@@ -18,12 +20,6 @@ const COMPLEXITY = [
   { label: "7월", value: 7.0, isUser: false },
   { label: "6월", value: 5.8, isUser: false },
   { label: "평균", value: 6.9, isUser: false },
-];
-
-const SENTIMENT = [
-  { label: "긍정", value: 70, color: "#5BA4A4" },
-  { label: "중립", value: 20, color: "#BBBBBB" },
-  { label: "부정", value: 10, color: "#E57373" },
 ];
 
 function HorizontalBar({
@@ -83,6 +79,59 @@ function SentimentBar({
 }
 
 export default function DetailScreen() {
+  const [sentiment, setSentiment] = useState<{
+    positive: number;
+    neutral: number;
+    negative: number;
+  } | null>(null);
+  const [isSentimentLoading, setIsSentimentLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadSentiment() {
+        setIsSentimentLoading(true);
+        try {
+          const now = new Date();
+          const report = await getMonthlyAnswerReport(
+            now.getFullYear(),
+            now.getMonth() + 1
+          );
+          if (isMounted) {
+            setSentiment({
+              positive: report.sentiment_summary.positive ?? 0,
+              neutral: report.sentiment_summary.neutral ?? 0,
+              negative: report.sentiment_summary.negative ?? 0,
+            });
+          }
+        } catch {
+          if (isMounted) {
+            setSentiment(null);
+          }
+        } finally {
+          if (isMounted) {
+            setIsSentimentLoading(false);
+          }
+        }
+      }
+
+      loadSentiment();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
+
+  const sentimentBars = sentiment
+    ? [
+        { label: "긍정", value: sentiment.positive, color: "#5BA4A4" },
+        { label: "중립", value: sentiment.neutral, color: "#BBBBBB" },
+        { label: "부정", value: sentiment.negative, color: "#E57373" },
+      ]
+    : [];
+
   return (
     <View className="flex-1 bg-[#FDF2EC]">
       <Header title="상세 지표" />
@@ -175,16 +224,22 @@ export default function DetailScreen() {
           <Text className="text-[15px] font-bold text-[#333333]">
             ♡ 감정 분석 (최근 한달 기록)
           </Text>
-          <View className="mt-3 gap-2.5">
-            {SENTIMENT.map((d) => (
-              <SentimentBar
-                key={d.label}
-                label={d.label}
-                value={d.value}
-                color={d.color}
-              />
-            ))}
-          </View>
+          {isSentimentLoading ? (
+            <View className="items-center py-3">
+              <ActivityIndicator color="#5BA4A4" />
+            </View>
+          ) : (
+            <View className="mt-3 gap-2.5">
+              {sentimentBars.map((d) => (
+                <SentimentBar
+                  key={d.label}
+                  label={d.label}
+                  value={d.value}
+                  color={d.color}
+                />
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 
