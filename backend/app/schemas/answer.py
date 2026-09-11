@@ -49,3 +49,18 @@ class MonthlyAnswerReport(BaseModel):
     positive_score_diff_pct: float | None
     complexity_diff_pct: float | None
     ai_comment: str
+
+class MonthlyHistoryItem(BaseModel):
+    year: int
+    month: int
+    avg_word_count: float | None
+    avg_complexity_score: float | None
+    has_data: bool
+
+class MonthlyHistoryAverage(BaseModel):
+    avg_word_count: float | None
+    avg_complexity_score: float | None
+
+class MonthlyHistoryResponse(BaseModel):
+    months: list[MonthlyHistoryItem]
+    average: MonthlyHistoryAverage

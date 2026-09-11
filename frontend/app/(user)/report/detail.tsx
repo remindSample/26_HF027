@@ -3,24 +3,11 @@ import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 
 import Header from "@/components/Header";
-import { getMonthlyAnswerReport } from "@/apis";
-
-// 데모용 mock 데이터
-const WORD_USAGE = [
-  { label: "9월", value: 0.82, isUser: true },
-  { label: "8월", value: 0.65, isUser: false },
-  { label: "7월", value: 0.7, isUser: false },
-  { label: "6월", value: 0.58, isUser: false },
-  { label: "평균", value: 0.68, isUser: false },
-];
-
-const COMPLEXITY = [
-  { label: "9월", value: 8.2, isUser: true },
-  { label: "8월", value: 6.5, isUser: false },
-  { label: "7월", value: 7.0, isUser: false },
-  { label: "6월", value: 5.8, isUser: false },
-  { label: "평균", value: 6.9, isUser: false },
-];
+import {
+  getAnswerReportHistory,
+  getMonthlyAnswerReport,
+  type MonthlyHistoryResponse,
+} from "@/apis";
 
 function HorizontalBar({
   label,
@@ -28,26 +15,29 @@ function HorizontalBar({
   maxValue,
   isUser,
   unit,
+  hasData = true,
 }: {
   label: string;
   value: number;
   maxValue: number;
   isUser: boolean;
   unit: string;
+  hasData?: boolean;
 }) {
-  const pct = Math.min((value / maxValue) * 100, 100);
+  const pct = hasData ? Math.min((value / maxValue) * 100, 100) : 0;
   return (
     <View className="flex-row items-center gap-2 my-1">
       <Text className="w-9 text-xs text-[#666666] text-right">{label}</Text>
       <View className="flex-1 h-[18px] bg-[#EEEEEE] rounded-[9px] overflow-hidden">
-        <View
-          className={`h-full rounded-[9px] ${isUser ? "bg-[#5BA4A4]" : "bg-[#AAAAAA]"}`}
-          style={{ width: `${pct}%` as any }}
-        />
+        {hasData && (
+          <View
+            className={`h-full rounded-[9px] ${isUser ? "bg-[#5BA4A4]" : "bg-[#AAAAAA]"}`}
+            style={{ width: `${pct}%` as any }}
+          />
+        )}
       </View>
       <Text className="w-9 text-xs text-[#444444]">
-        {value}
-        {unit}
+        {hasData ? `${value}${unit}` : "-"}
       </Text>
     </View>
   );
@@ -132,6 +122,84 @@ export default function DetailScreen() {
       ]
     : [];
 
+  const [history, setHistory] = useState<MonthlyHistoryResponse | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadHistory() {
+        setIsHistoryLoading(true);
+        try {
+          const data = await getAnswerReportHistory(4);
+          if (isMounted) {
+            setHistory(data);
+          }
+        } catch {
+          if (isMounted) {
+            setHistory(null);
+          }
+        } finally {
+          if (isMounted) {
+            setIsHistoryLoading(false);
+          }
+        }
+      }
+
+      loadHistory();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
+
+  const wordUsageBars = history
+    ? [
+        ...history.months.map((item, index) => ({
+          label: `${item.month}월`,
+          value: item.avg_word_count ?? 0,
+          hasData: item.has_data,
+          isUser: index === 0,
+        })),
+        {
+          label: "평균",
+          value: history.average.avg_word_count ?? 0,
+          hasData: history.average.avg_word_count !== null,
+          isUser: false,
+        },
+      ]
+    : [];
+
+  const maxWordCount = Math.max(
+    1,
+    ...wordUsageBars.filter((d) => d.hasData).map((d) => d.value)
+  );
+
+  const complexityBars = history
+    ? [
+        ...history.months.map((item, index) => ({
+          label: `${item.month}월`,
+          value:
+            item.avg_complexity_score !== null
+              ? Math.round(Math.min((item.avg_complexity_score / 10) * 100, 100))
+              : 0,
+          hasData: item.has_data,
+          isUser: index === 0,
+        })),
+        {
+          label: "평균",
+          value:
+            history.average.avg_complexity_score !== null
+              ? Math.round(Math.min((history.average.avg_complexity_score / 10) * 100, 100))
+              : 0,
+          hasData: history.average.avg_complexity_score !== null,
+          isUser: false,
+        },
+      ]
+    : [];
+
   return (
     <View className="flex-1 bg-[#FDF2EC]">
       <Header title="상세 지표" />
@@ -157,16 +225,23 @@ export default function DetailScreen() {
               <Text className="text-[11px] text-[#777777] mr-1">사용자</Text>
             </View>
           </View>
-          {WORD_USAGE.map((d) => (
-            <HorizontalBar
-              key={d.label}
-              label={d.label}
-              value={d.value}
-              maxValue={1}
-              isUser={d.isUser}
-              unit=""
-            />
-          ))}
+          {isHistoryLoading ? (
+            <View className="items-center py-3">
+              <ActivityIndicator color="#5BA4A4" />
+            </View>
+          ) : (
+            wordUsageBars.map((d) => (
+              <HorizontalBar
+                key={d.label}
+                label={d.label}
+                value={d.value}
+                maxValue={maxWordCount}
+                isUser={d.isUser}
+                unit="개"
+                hasData={d.hasData}
+              />
+            ))
+          )}
         </View>
 
         {/* 언어 복잡도 */}
@@ -185,16 +260,23 @@ export default function DetailScreen() {
               <Text className="text-[11px] text-[#777777] mr-1">사용자</Text>
             </View>
           </View>
-          {COMPLEXITY.map((d) => (
-            <HorizontalBar
-              key={d.label}
-              label={d.label}
-              value={d.value}
-              maxValue={10}
-              isUser={d.isUser}
-              unit=""
-            />
-          ))}
+          {isHistoryLoading ? (
+            <View className="items-center py-3">
+              <ActivityIndicator color="#5BA4A4" />
+            </View>
+          ) : (
+            complexityBars.map((d) => (
+              <HorizontalBar
+                key={d.label}
+                label={d.label}
+                value={d.value}
+                maxValue={100}
+                isUser={d.isUser}
+                unit="점"
+                hasData={d.hasData}
+              />
+            ))
+          )}
         </View>
 
         {/* 손바닥 게임 */}
