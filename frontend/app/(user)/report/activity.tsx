@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import { getMonthlyAnswerReport, type AnswerResponse } from "@/apis";
+import { getAuthSession, getMonthlyAnswerReport, type AnswerResponse } from "@/apis";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
@@ -35,6 +35,7 @@ export default function ActivityReportScreen() {
   const [avgComplexityScore, setAvgComplexityScore] = useState(0);
   const [complexityDiffPct, setComplexityDiffPct] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userName, setUserName] = useState<string | null>(null);
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
@@ -90,6 +91,31 @@ export default function ActivityReportScreen() {
     }, [currentYear, currentMonth])
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadUserName() {
+        try {
+          const session = await getAuthSession();
+          if (isMounted) {
+            setUserName(session?.user.name ?? null);
+          }
+        } catch {
+          if (isMounted) {
+            setUserName(null);
+          }
+        }
+      }
+
+      loadUserName();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
+
   const complexityScoreOutOf100 = Math.round(
     Math.min((avgComplexityScore / 10) * 100, 100)
   );
@@ -128,7 +154,7 @@ export default function ActivityReportScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text className="text-base font-semibold text-[#333333]">
-          김순자 어르신의 인지 건강 분석
+          {userName ? `${userName} 어르신의 인지 건강 분석` : "어르신의 인지 건강 분석"}
         </Text>
 
         {/* 요약 카드 */}
