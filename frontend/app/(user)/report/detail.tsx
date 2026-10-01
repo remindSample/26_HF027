@@ -1,30 +1,15 @@
-import { router } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import Header from "@/components/Header";
-
-// 데모용 mock 데이터
-const WORD_USAGE = [
-  { label: "5월", value: 0.82, isUser: true },
-  { label: "4월", value: 0.65, isUser: false },
-  { label: "3월", value: 0.7, isUser: false },
-  { label: "2월", value: 0.58, isUser: false },
-  { label: "평균", value: 0.68, isUser: false },
-];
-
-const COMPLEXITY = [
-  { label: "5월", value: 8.2, isUser: true },
-  { label: "4월", value: 6.5, isUser: false },
-  { label: "3월", value: 7.0, isUser: false },
-  { label: "2월", value: 5.8, isUser: false },
-  { label: "평균", value: 6.9, isUser: false },
-];
-
-const SENTIMENT = [
-  { label: "긍정", value: 70, color: "#5BA4A4" },
-  { label: "중립", value: 20, color: "#BBBBBB" },
-  { label: "부정", value: 10, color: "#E57373" },
-];
+import {
+  getAnswerReportHistory,
+  getMonthlyGameReport,
+  getMonthlyAnswerReport,
+  type MonthlyGameReport,
+  type MonthlyHistoryResponse,
+} from "@/apis";
 
 function HorizontalBar({
   label,
@@ -32,26 +17,29 @@ function HorizontalBar({
   maxValue,
   isUser,
   unit,
+  hasData = true,
 }: {
   label: string;
   value: number;
   maxValue: number;
   isUser: boolean;
   unit: string;
+  hasData?: boolean;
 }) {
-  const pct = Math.min((value / maxValue) * 100, 100);
+  const pct = hasData ? Math.min((value / maxValue) * 100, 100) : 0;
   return (
     <View className="flex-row items-center gap-2 my-1">
       <Text className="w-9 text-xs text-[#666666] text-right">{label}</Text>
       <View className="flex-1 h-[18px] bg-[#EEEEEE] rounded-[9px] overflow-hidden">
-        <View
-          className={`h-full rounded-[9px] ${isUser ? "bg-[#5BA4A4]" : "bg-[#AAAAAA]"}`}
-          style={{ width: `${pct}%` as any }}
-        />
+        {hasData && (
+          <View
+            className={`h-full rounded-[9px] ${isUser ? "bg-[#5BA4A4]" : "bg-[#AAAAAA]"}`}
+            style={{ width: `${pct}%` as any }}
+          />
+        )}
       </View>
       <Text className="w-9 text-xs text-[#444444]">
-        {value}
-        {unit}
+        {hasData ? `${value}${unit}` : "-"}
       </Text>
     </View>
   );
@@ -83,8 +71,159 @@ function SentimentBar({
 }
 
 export default function DetailScreen() {
+  const [sentiment, setSentiment] = useState<{
+    positive: number;
+    neutral: number;
+    negative: number;
+  } | null>(null);
+  const [gameReport, setGameReport] = useState<MonthlyGameReport | null>(null);
+  const [isSentimentLoading, setIsSentimentLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadSentiment() {
+        setIsSentimentLoading(true);
+        try {
+          const now = new Date();
+          const report = await getMonthlyAnswerReport(
+            now.getFullYear(),
+            now.getMonth() + 1
+          );
+          const gameData = await getMonthlyGameReport(
+            now.getFullYear(),
+            now.getMonth() + 1
+          );
+          if (isMounted) {
+            setSentiment({
+              positive: report.sentiment_summary.positive ?? 0,
+              neutral: report.sentiment_summary.neutral ?? 0,
+              negative: report.sentiment_summary.negative ?? 0,
+            });
+            setGameReport(gameData);
+          }
+        } catch {
+          if (isMounted) {
+            setSentiment(null);
+            setGameReport(null);
+          }
+        } finally {
+          if (isMounted) {
+            setIsSentimentLoading(false);
+          }
+        }
+      }
+
+      loadSentiment();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
+
+  const sentimentBars = sentiment
+    ? [
+        { label: "긍정", value: sentiment.positive, color: "#5BA4A4" },
+        { label: "중립", value: sentiment.neutral, color: "#BBBBBB" },
+        { label: "부정", value: sentiment.negative, color: "#E57373" },
+      ]
+    : [];
+
+  const [history, setHistory] = useState<MonthlyHistoryResponse | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadHistory() {
+        setIsHistoryLoading(true);
+        try {
+          const data = await getAnswerReportHistory(4);
+          if (isMounted) {
+            setHistory(data);
+          }
+        } catch {
+          if (isMounted) {
+            setHistory(null);
+          }
+        } finally {
+          if (isMounted) {
+            setIsHistoryLoading(false);
+          }
+        }
+      }
+
+      loadHistory();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
+
+  const wordUsageBars = history
+    ? [
+        ...history.months.map((item, index) => ({
+          label: `${item.month}월`,
+          value: item.avg_word_count ?? 0,
+          hasData: item.has_data,
+          isUser: index === 0,
+        })),
+        {
+          label: "평균",
+          value: history.average.avg_word_count ?? 0,
+          hasData: history.average.avg_word_count !== null,
+          isUser: false,
+        },
+      ]
+    : [];
+
+  const maxWordCount = Math.max(
+    1,
+    ...wordUsageBars.filter((d) => d.hasData).map((d) => d.value)
+  );
+
+  const complexityBars = history
+    ? [
+        ...history.months.map((item, index) => ({
+          label: `${item.month}월`,
+          value:
+            item.avg_complexity_score !== null
+              ? Math.round(Math.min((item.avg_complexity_score / 10) * 100, 100))
+              : 0,
+          hasData: item.has_data,
+          isUser: index === 0,
+        })),
+        {
+          label: "평균",
+          value:
+            history.average.avg_complexity_score !== null
+              ? Math.round(Math.min((history.average.avg_complexity_score / 10) * 100, 100))
+              : 0,
+          hasData: history.average.avg_complexity_score !== null,
+          isUser: false,
+        },
+      ]
+    : [];
+
+  const gameAccuracyText =
+    gameReport?.accuracy !== null && gameReport?.accuracy !== undefined
+      ? `정확도 ${gameReport.accuracy}%`
+      : "아직 게임 기록 없음";
+  const gameCountText =
+    gameReport && gameReport.total_count > 0
+      ? `성공 ${gameReport.success_count}회 / 총 ${gameReport.total_count}회`
+      : "게임을 완료하면 기록이 표시돼요";
+  const gameDiffText =
+    gameReport?.accuracy_diff_pct !== null && gameReport?.accuracy_diff_pct !== undefined
+      ? `지난달 대비 ${gameReport.accuracy_diff_pct > 0 ? "+" : ""}${gameReport.accuracy_diff_pct}%`
+      : "지난달 비교 데이터 없음";
+
   return (
-    <View className="flex-1 bg-[#F0F8FF]">
+    <View className="flex-1 bg-[#FDF2EC]">
       <Header title="상세 지표" />
 
       <ScrollView
@@ -108,16 +247,23 @@ export default function DetailScreen() {
               <Text className="text-[11px] text-[#777777] mr-1">사용자</Text>
             </View>
           </View>
-          {WORD_USAGE.map((d) => (
-            <HorizontalBar
-              key={d.label}
-              label={d.label}
-              value={d.value}
-              maxValue={1}
-              isUser={d.isUser}
-              unit=""
-            />
-          ))}
+          {isHistoryLoading ? (
+            <View className="items-center py-3">
+              <ActivityIndicator color="#5BA4A4" />
+            </View>
+          ) : (
+            wordUsageBars.map((d) => (
+              <HorizontalBar
+                key={d.label}
+                label={d.label}
+                value={d.value}
+                maxValue={maxWordCount}
+                isUser={d.isUser}
+                unit="개"
+                hasData={d.hasData}
+              />
+            ))
+          )}
         </View>
 
         {/* 언어 복잡도 */}
@@ -136,16 +282,23 @@ export default function DetailScreen() {
               <Text className="text-[11px] text-[#777777] mr-1">사용자</Text>
             </View>
           </View>
-          {COMPLEXITY.map((d) => (
-            <HorizontalBar
-              key={d.label}
-              label={d.label}
-              value={d.value}
-              maxValue={10}
-              isUser={d.isUser}
-              unit=""
-            />
-          ))}
+          {isHistoryLoading ? (
+            <View className="items-center py-3">
+              <ActivityIndicator color="#5BA4A4" />
+            </View>
+          ) : (
+            complexityBars.map((d) => (
+              <HorizontalBar
+                key={d.label}
+                label={d.label}
+                value={d.value}
+                maxValue={100}
+                isUser={d.isUser}
+                unit="점"
+                hasData={d.hasData}
+              />
+            ))
+          )}
         </View>
 
         {/* 손바닥 게임 */}
@@ -158,11 +311,11 @@ export default function DetailScreen() {
           </Text>
           <View className="items-center py-2 gap-1.5">
             <Text className="text-[28px] font-extrabold text-[#5BA4A4]">
-              정확도 87%
+              {gameAccuracyText}
             </Text>
-            <Text className="text-sm text-[#555555]">성공 26회 / 총 30회</Text>
+            <Text className="text-sm text-[#555555]">{gameCountText}</Text>
             <Text className="text-sm text-[#5BA4A4] font-semibold">
-              ↑ 지난달 대비 +5%
+              {gameDiffText}
             </Text>
           </View>
         </View>
@@ -175,16 +328,22 @@ export default function DetailScreen() {
           <Text className="text-[15px] font-bold text-[#333333]">
             ♡ 감정 분석 (최근 한달 기록)
           </Text>
-          <View className="mt-3 gap-2.5">
-            {SENTIMENT.map((d) => (
-              <SentimentBar
-                key={d.label}
-                label={d.label}
-                value={d.value}
-                color={d.color}
-              />
-            ))}
-          </View>
+          {isSentimentLoading ? (
+            <View className="items-center py-3">
+              <ActivityIndicator color="#5BA4A4" />
+            </View>
+          ) : (
+            <View className="mt-3 gap-2.5">
+              {sentimentBars.map((d) => (
+                <SentimentBar
+                  key={d.label}
+                  label={d.label}
+                  value={d.value}
+                  color={d.color}
+                />
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 

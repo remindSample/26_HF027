@@ -17,7 +17,14 @@ export function getQuestionsByUser(userId = getCurrentUserId()) {
   return apiRequest<QuestionResponse[]>(`/questions/user/${userId}`);
 }
 
-export type QuestionTag = "family" | "food" | "travel" | "season" | "hobby";
+export type QuestionTag =
+  | "family"
+  | "food"
+  | "travel"
+  | "season"
+  | "hobby"
+  | "childhood"
+  | "friend";
 
 export function generateQuestion(tag: QuestionTag, userId = getCurrentUserId()) {
   return apiRequest<QuestionResponse>("/questions/generate", {
