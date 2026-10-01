@@ -20,7 +20,7 @@ class QuestionCreate(BaseModel):
 
 
 class QuestionGenerateRequest(BaseModel):
-    tag: Literal["family", "food", "travel", "season", "hobby"]
+    tag: Literal["family", "food", "travel", "season", "hobby", "childhood", "friend"]
     target_user_id: int | None = None
     created_by: int | None = None
 

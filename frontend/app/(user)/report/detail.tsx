@@ -1,11 +1,13 @@
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import Header from "@/components/Header";
 import {
   getAnswerReportHistory,
+  getMonthlyGameReport,
   getMonthlyAnswerReport,
+  type MonthlyGameReport,
   type MonthlyHistoryResponse,
 } from "@/apis";
 
@@ -74,6 +76,7 @@ export default function DetailScreen() {
     neutral: number;
     negative: number;
   } | null>(null);
+  const [gameReport, setGameReport] = useState<MonthlyGameReport | null>(null);
   const [isSentimentLoading, setIsSentimentLoading] = useState(true);
 
   useFocusEffect(
@@ -88,16 +91,22 @@ export default function DetailScreen() {
             now.getFullYear(),
             now.getMonth() + 1
           );
+          const gameData = await getMonthlyGameReport(
+            now.getFullYear(),
+            now.getMonth() + 1
+          );
           if (isMounted) {
             setSentiment({
               positive: report.sentiment_summary.positive ?? 0,
               neutral: report.sentiment_summary.neutral ?? 0,
               negative: report.sentiment_summary.negative ?? 0,
             });
+            setGameReport(gameData);
           }
         } catch {
           if (isMounted) {
             setSentiment(null);
+            setGameReport(null);
           }
         } finally {
           if (isMounted) {
@@ -200,6 +209,19 @@ export default function DetailScreen() {
       ]
     : [];
 
+  const gameAccuracyText =
+    gameReport?.accuracy !== null && gameReport?.accuracy !== undefined
+      ? `정확도 ${gameReport.accuracy}%`
+      : "아직 게임 기록 없음";
+  const gameCountText =
+    gameReport && gameReport.total_count > 0
+      ? `성공 ${gameReport.success_count}회 / 총 ${gameReport.total_count}회`
+      : "게임을 완료하면 기록이 표시돼요";
+  const gameDiffText =
+    gameReport?.accuracy_diff_pct !== null && gameReport?.accuracy_diff_pct !== undefined
+      ? `지난달 대비 ${gameReport.accuracy_diff_pct > 0 ? "+" : ""}${gameReport.accuracy_diff_pct}%`
+      : "지난달 비교 데이터 없음";
+
   return (
     <View className="flex-1 bg-[#FDF2EC]">
       <Header title="상세 지표" />
@@ -289,11 +311,11 @@ export default function DetailScreen() {
           </Text>
           <View className="items-center py-2 gap-1.5">
             <Text className="text-[28px] font-extrabold text-[#5BA4A4]">
-              정확도 87%
+              {gameAccuracyText}
             </Text>
-            <Text className="text-sm text-[#555555]">성공 26회 / 총 30회</Text>
+            <Text className="text-sm text-[#555555]">{gameCountText}</Text>
             <Text className="text-sm text-[#5BA4A4] font-semibold">
-              ↑ 지난달 대비 +5%
+              {gameDiffText}
             </Text>
           </View>
         </View>
