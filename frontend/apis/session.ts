@@ -8,8 +8,20 @@ const AUTH_SESSION_STORAGE_KEY = "remind_auth_session";
 let authSession: LoginResponse | null = null;
 let currentUserId: number | null = null;
 
+function getWebStorage() {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return null;
+  }
+
+  return window.localStorage;
+}
+
 async function getStoredAuthSession(): Promise<LoginResponse | null> {
-  const stored = await AsyncStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+  const webStorage = getWebStorage();
+  const stored = webStorage
+    ? webStorage.getItem(AUTH_SESSION_STORAGE_KEY)
+    : await AsyncStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+
   if (!stored) {
     return null;
   }
@@ -17,7 +29,11 @@ async function getStoredAuthSession(): Promise<LoginResponse | null> {
   try {
     return JSON.parse(stored) as LoginResponse;
   } catch {
-    await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    if (webStorage) {
+      webStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    } else {
+      await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    }
     return null;
   }
 }
@@ -48,7 +64,13 @@ export async function setAuthSession(session: LoginResponse) {
   authSession = session;
   currentUserId = session.user.id;
 
-  await AsyncStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session));
+  const serializedSession = JSON.stringify(session);
+  const webStorage = getWebStorage();
+  if (webStorage) {
+    webStorage.setItem(AUTH_SESSION_STORAGE_KEY, serializedSession);
+  } else {
+    await AsyncStorage.setItem(AUTH_SESSION_STORAGE_KEY, serializedSession);
+  }
 }
 
 export async function getAuthSession() {
@@ -60,7 +82,12 @@ export async function clearAuthSession() {
   authSession = null;
   currentUserId = null;
 
-  await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+  const webStorage = getWebStorage();
+  if (webStorage) {
+    webStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+  } else {
+    await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+  }
 }
 
 export function setCurrentUserId(userId: number) {

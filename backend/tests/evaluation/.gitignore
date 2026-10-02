@@ -1,0 +1,9 @@
+.env.eval
+__pycache__/
+*.pyc
+pilot_sentiment_scores.csv
+pilot_threshold_candidates.csv
+remind_eval_results.csv
+remind_eval_summary.csv
+remind_eval_errors.csv
+monthly-report-figure.png

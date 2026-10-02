@@ -12,6 +12,18 @@ export type GameSessionResponse = {
 export type GameGesture = "FIST" | "PALM";
 export type GameHand = "LEFT" | "RIGHT";
 
+export type MonthlyGameReport = {
+  year: number;
+  month: number;
+  session_count: number;
+  success_count: number;
+  total_count: number;
+  accuracy: number | null;
+  accuracy_diff_pct: number | null;
+  total_score: number;
+  has_last_month_data: boolean;
+};
+
 export async function startGameSession(level: number, userId?: number) {
   const resolvedUserId = userId ?? await getCurrentUserId();
 
@@ -46,4 +58,16 @@ export function finishGameSession(
       total_count: totalCount,
     }),
   });
+}
+
+export async function getMonthlyGameReport(
+  year: number,
+  month: number,
+  userId?: number
+) {
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
+  return apiRequest<MonthlyGameReport>(
+    `/game/sessions/report?year=${year}&month=${month}&user_id=${resolvedUserId}`
+  );
 }
