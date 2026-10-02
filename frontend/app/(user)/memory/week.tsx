@@ -72,22 +72,43 @@ function MemoryTabs() {
   return (
     <View className="mt-8 flex-row justify-between gap-4">
       <Link href="/(user)/memory/list" asChild>
-        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#BFBFBF]">
+        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9F7F4]"
+        style={{
+                  elevation: 0.5,
+                  shadowColor: "#000000",
+                  shadowOffset: { width: 1, height: 1 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 6,
+                }}>
           <Ionicons name="list" size={25} color="#1F1F1F" />
           <Text className="ml-2 text-[20px] font-medium text-black">목록</Text>
         </Pressable>
       </Link>
 
       <Link href="/(user)/memory/month" asChild>
-        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#BFBFBF]">
+        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9F7F4]"
+        style={{
+                  elevation: 0.5,
+                  shadowColor: "#000000",
+                  shadowOffset: { width: 1, height: 1 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 6,
+                }}>
           <Ionicons name="calendar-outline" size={25} color="#1F1F1F" />
           <Text className="ml-2 text-[20px] font-medium text-black">달력</Text>
         </Pressable>
       </Link>
 
-      <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#7B7B7B]">
-        <Ionicons name="calendar-clear-outline" size={25} color="#FFFFFF" />
-        <Text className="ml-2 text-[20px] font-medium text-white">주간</Text>
+      <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9EBDF]"
+      style={{
+                elevation: 0.5,
+                shadowColor: "#000000",
+                shadowOffset: { width: 1, height: 1 },
+                shadowOpacity: 0.3,
+                shadowRadius: 6,
+              }}>
+        <Ionicons name="calendar-clear-outline" size={25} color="#1F1F1F" />
+        <Text className="ml-2 text-[20px] font-medium text-black">주간</Text>
       </Pressable>
     </View>
   );
@@ -105,19 +126,19 @@ function WeekMemoryRow({
   return (
     <Pressable
       className={`min-h-[78px] flex-row items-center rounded-[14px] px-5 py-3 ${
-        hasMemory ? "bg-[#DDD4BC]" : "bg-[#D9D9D9]"
+        hasMemory ? "bg-[#ede6d0]" : "bg-[#ffffff]"
       }`}
     >
       <View className="w-[58px] items-center">
         <Text className="text-[17px] font-medium text-black">{day.weekday}</Text>
-        <Text className="text-[26px] font-medium text-black">{day.day}</Text>
+        <Text className="text-[24px] font-medium text-black">{day.day}</Text>
       </View>
 
       {hasMemory && memory ? (
         <>
           <View className="ml-7 flex-1">
             <Text
-              className="text-[20px] font-medium leading-[28px] text-black"
+              className="text-[18px] font-medium leading-[28px] text-black"
               numberOfLines={1}
             >
               {memory.question}
@@ -129,7 +150,7 @@ function WeekMemoryRow({
           <Ionicons name="copy-outline" size={37} color="#6B6255" />
         </>
       ) : (
-        <Text className="ml-7 flex-1 text-[24px] font-medium text-[#777777]">
+        <Text className="ml-7 flex-1 text-[18px] font-medium text-[#777777]">
           기록 없음
         </Text>
       )}
@@ -162,13 +183,13 @@ export default function GuardianMemoryWeekScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-[#FDF2EC]">
       <ScrollView
         className="flex-1"
         contentContainerClassName="px-5 pb-6 pt-[30px]"
         showsVerticalScrollIndicator={false}
       >
-        <View className="h-[56px] flex-row items-center bg-[#D9D9D9] px-3">
+        <View className="h-[56px] flex-row items-center bg-white px-3">
           <Ionicons name="search-outline" size={38} color="#858585" />
           <TextInput
             accessibilityLabel="기억 검색"
@@ -180,29 +201,29 @@ export default function GuardianMemoryWeekScreen() {
 
         <MemoryTabs />
 
-        <View className="-mx-5 mt-8 bg-[#A9A9A9] px-5 pb-8 pt-[26px]">
-          <View className="rounded-[14px] bg-[#EFEFEF] px-3 pb-4 pt-5">
+        <View className="-mx-5 mt-8 bg-[#FDF2EC] px-5 pb-8 pt-[26px]">
+          <View className="rounded-[14px] bg-[#BFCBC7]/70 px-3 pb-4 pt-5">
             <View className="flex-row items-center justify-between">
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="이전 주"
-                className="h-[46px] w-[46px] items-center justify-center rounded-[12px] bg-[#8C8C8C]"
+                className="h-[46px] w-[46px] items-center justify-center rounded-[12px] bg-[#BFCBC7]"
                 onPress={() => moveWeek(-1)}
               >
-                <Ionicons name="chevron-back" size={31} color="#111111" />
+                <Ionicons name="chevron-back" size={31} color="#ffffff" />
               </Pressable>
 
-              <Text className="text-[29px] font-medium text-black">
+              <Text className="text-[24px] font-medium text-black">
                 {titleYear}년 {titleMonth}월 {titleWeek}주차
               </Text>
 
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="다음 주"
-                className="h-[46px] w-[46px] items-center justify-center rounded-[12px] bg-[#8C8C8C]"
+                className="h-[46px] w-[46px] items-center justify-center rounded-[12px] bg-[#BFCBC7]"
                 onPress={() => moveWeek(1)}
               >
-                <Ionicons name="chevron-forward" size={31} color="#111111" />
+                <Ionicons name="chevron-forward" size={31} color="#ffffff" />
               </Pressable>
             </View>
 

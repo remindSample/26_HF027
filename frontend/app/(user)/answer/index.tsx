@@ -10,26 +10,34 @@ export default function AnswerMethodScreen() {
   }>();
 
   const goTo = (method: "camera" | "gallery" | "write") => {
+    console.log("goTo called:", method);
     router.push({
       pathname: `/answer/${method}`,
       params: { questionId, qType, questionText },
     } as Href);
+    console.log("router.push done for:", method);
   };
 
   return (
-    <View className="flex-1 bg-[#F0F8FF]">
+    <View className="flex-1 bg-[#FDF2EC]">
 
       <Header title="보호자가 남긴 질문"/>
 
       <View className="flex-1 p-5 gap-6">
         <View
-          className="bg-white rounded-[14px] p-5 gap-2.5"
-          style={{ elevation: 1 }}
+          className="mt-7 bg-[#FFFBF7] p-5 gap-2.5 border-2 border-black"
+          style={{
+                elevation: 3,
+                shadowColor: "#000000",
+                shadowOffset: { width: 3, height: 3 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+              }}
         >
-          <Text className="text-[13px] text-[#5BA4A4] font-semibold">
+          <Text className="text-[16px] text-[#5BA4A4] font-semibold">
             오늘의 질문
           </Text>
-          <Text className="text-base text-[#222222] leading-[25px] font-medium">
+          <Text className="text-[20px] text-[#222222] leading-[25px] font-medium">
             {questionText}
           </Text>
           <Text className="text-[13px] text-[#999999]">
@@ -37,10 +45,16 @@ export default function AnswerMethodScreen() {
           </Text>
         </View>
 
-        <View className="gap-3.5">
+        <View className="gap-5">
           <Pressable
-            className="flex-row items-center gap-4 bg-white rounded-[14px] px-[22px] py-5"
-            style={{ elevation: 1 }}
+            className="mt-10 flex-row items-center gap-4 bg-[#FFFBF7] rounded-[14px] px-[22px] py-5 border-2 border-black"
+            style={{
+                elevation: 3,
+                shadowColor: "#000000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+              }}
             onPress={() => goTo("camera")}
           >
             <Text className="text-[26px]">📷</Text>
@@ -50,8 +64,14 @@ export default function AnswerMethodScreen() {
           </Pressable>
 
           <Pressable
-            className="flex-row items-center gap-4 bg-white rounded-[14px] px-[22px] py-5"
-            style={{ elevation: 1 }}
+            className="flex-row items-center gap-4 bg-[#FFFBF7] rounded-[14px] px-[22px] py-5 border-2 border-black"
+            style={{
+                elevation: 3,
+                shadowColor: "#000000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+              }}
             onPress={() => goTo("gallery")}
           >
             <Text className="text-[26px]">🖼</Text>
@@ -61,8 +81,14 @@ export default function AnswerMethodScreen() {
           </Pressable>
 
           <Pressable
-            className="flex-row items-center gap-4 bg-white rounded-[14px] px-[22px] py-5"
-            style={{ elevation: 1 }}
+            className="flex-row items-center gap-4 bg-[#FFFBF7] rounded-[14px] px-[22px] py-5 border-2 border-black"
+            style={{
+                elevation: 3,
+                shadowColor: "#000000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+              }}
             onPress={() => goTo("write")}
           >
             <Text className="text-[26px]">⌨️</Text>

@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import type { LoginResponse } from "./auth";
 
 const FALLBACK_USER_ID = 1;
@@ -14,13 +16,12 @@ function getWebStorage() {
   return window.localStorage;
 }
 
-function getStoredAuthSession(): LoginResponse | null {
-  const storage = getWebStorage();
-  if (!storage) {
-    return null;
-  }
+async function getStoredAuthSession(): Promise<LoginResponse | null> {
+  const webStorage = getWebStorage();
+  const stored = webStorage
+    ? webStorage.getItem(AUTH_SESSION_STORAGE_KEY)
+    : await AsyncStorage.getItem(AUTH_SESSION_STORAGE_KEY);
 
-  const stored = storage.getItem(AUTH_SESSION_STORAGE_KEY);
   if (!stored) {
     return null;
   }
@@ -28,7 +29,11 @@ function getStoredAuthSession(): LoginResponse | null {
   try {
     return JSON.parse(stored) as LoginResponse;
   } catch {
-    storage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    if (webStorage) {
+      webStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    } else {
+      await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    }
     return null;
   }
 }
@@ -55,28 +60,33 @@ function getDevAuthSession(): LoginResponse | null {
   };
 }
 
-export function setAuthSession(session: LoginResponse) {
+export async function setAuthSession(session: LoginResponse) {
   authSession = session;
   currentUserId = session.user.id;
 
-  const storage = getWebStorage();
-  if (storage) {
-    storage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session));
+  const serializedSession = JSON.stringify(session);
+  const webStorage = getWebStorage();
+  if (webStorage) {
+    webStorage.setItem(AUTH_SESSION_STORAGE_KEY, serializedSession);
+  } else {
+    await AsyncStorage.setItem(AUTH_SESSION_STORAGE_KEY, serializedSession);
   }
 }
 
-export function getAuthSession() {
-  authSession = authSession ?? getStoredAuthSession();
+export async function getAuthSession() {
+  authSession = authSession ?? await getStoredAuthSession();
   return authSession ?? getDevAuthSession();
 }
 
-export function clearAuthSession() {
+export async function clearAuthSession() {
   authSession = null;
   currentUserId = null;
 
-  const storage = getWebStorage();
-  if (storage) {
-    storage.removeItem(AUTH_SESSION_STORAGE_KEY);
+  const webStorage = getWebStorage();
+  if (webStorage) {
+    webStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+  } else {
+    await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
   }
 }
 
@@ -84,7 +94,7 @@ export function setCurrentUserId(userId: number) {
   currentUserId = userId;
 }
 
-export function getCurrentUserId() {
-  authSession = authSession ?? getStoredAuthSession();
+export async function getCurrentUserId() {
+  authSession = authSession ?? await getStoredAuthSession();
   return currentUserId ?? authSession?.user.id ?? FALLBACK_USER_ID;
 }

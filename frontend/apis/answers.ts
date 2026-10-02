@@ -1,5 +1,5 @@
-import { API_BASE_URL, apiRequest } from "./client";
-import { getCurrentUserId } from "./session";
+import { apiRequest, apiUpload } from "./client";
+import { getAuthSession, getCurrentUserId } from "./session";
 
 export type AnswerPayload = {
   user_id?: number;
@@ -30,6 +30,10 @@ export type AnswerResponse = {
   answered_at: string;
 };
 
+export type RecentAnswerResponse = AnswerResponse & {
+  question_content: string;
+};
+
 export type MonthlyAnswerReport = {
   year: number;
   month: number;
@@ -38,70 +42,95 @@ export type MonthlyAnswerReport = {
   avg_word_count: number;
   avg_sentence_count: number;
   avg_complexity_score: number;
+  avg_unique_word_ratio: number;
   sentiment_summary: Record<string, number>;
+  has_last_month_data: boolean;
+  word_count_diff_pct: number | null;
+  unique_word_ratio_diff_pct: number | null;
+  positive_score_diff_pct: number | null;
+  complexity_diff_pct: number | null;
   ai_comment: string;
 };
 
-export function submitAnswer(payload: AnswerPayload) {
+export async function submitAnswer(payload: AnswerPayload) {
+  const userId = payload.user_id ?? await getCurrentUserId();
+
   return apiRequest<AnswerResponse>("/answers", {
     method: "POST",
     body: JSON.stringify({
-      user_id: payload.user_id ?? getCurrentUserId(),
       input_type: "text",
       is_private: false,
       ...payload,
+      user_id: userId,
     }),
   });
 }
 
-export function getMonthlyAnswerReport(
+export async function getMonthlyAnswerReport(
   year: number,
   month: number,
-  userId = getCurrentUserId()
+  userId?: number
 ) {
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
   return apiRequest<MonthlyAnswerReport>(
-    `/answers/report?year=${year}&month=${month}&user_id=${userId}`
+    `/answers/report?year=${year}&month=${month}&user_id=${resolvedUserId}`
+  );
+}
+
+export async function getRecentAnswers(limit = 5, userId?: number) {
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
+  return apiRequest<RecentAnswerResponse[]>(
+    `/answers/recent?user_id=${resolvedUserId}&limit=${limit}`
+  );
+}
+
+export type MonthlyHistoryItem = {
+  year: number;
+  month: number;
+  avg_word_count: number | null;
+  avg_complexity_score: number | null;
+  has_data: boolean;
+};
+
+export type MonthlyHistoryAverage = {
+  avg_word_count: number | null;
+  avg_complexity_score: number | null;
+};
+
+export type MonthlyHistoryResponse = {
+  months: MonthlyHistoryItem[];
+  average: MonthlyHistoryAverage;
+};
+
+export async function getAnswerReportHistory(months = 4, userId?: number) {
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
+  return apiRequest<MonthlyHistoryResponse>(
+    `/answers/report/history?user_id=${resolvedUserId}&months=${months}`
   );
 }
 
 export async function uploadImageAnswer({
   questionId,
   imageUri,
-  userId = getCurrentUserId(),
+  isPrivate = false,
 }: {
   questionId: number;
   imageUri: string;
-  userId?: number;
+  isPrivate?: boolean;
 }) {
   const formData = new FormData();
+  const imageResponse = await fetch(imageUri);
+  const imageBlob = await imageResponse.blob();
+  formData.append("image", imageBlob, "answer.jpg");
   formData.append("question_id", String(questionId));
-  formData.append("user_id", String(userId));
-  formData.append("image", {
-    uri: imageUri,
-    name: "answer.jpg",
-    type: "image/jpeg",
-  } as unknown as Blob);
+  formData.append("is_private", String(isPrivate));
 
-  let response: Response;
+  const session = await getAuthSession();
 
-  try {
-    response = await fetch(`${API_BASE_URL}/answers/upload-image`, {
-      method: "POST",
-      body: formData,
-    });
-  } catch {
-    throw new Error("서버에 연결할 수 없습니다. 백엔드 서버가 실행 중인지 확인해주세요.");
-  }
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data && typeof data === "object" && "detail" in data
-        ? String(data.detail)
-        : "촬영 답변 저장에 실패했습니다."
-    );
-  }
-
-  return data as AnswerResponse;
+  return apiUpload<AnswerResponse>("/answers/upload-image", formData, {
+    authToken: session?.access_token,
+  });
 }

@@ -44,20 +44,41 @@ const initialMemoryItems: MemoryItem[] = [
 function MemoryTabs() {
   return (
     <View className="mt-8 flex-row justify-between gap-4">
-      <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#7B7B7B]">
-        <Ionicons name="list" size={25} color="#FFFFFF" />
-        <Text className="ml-2 text-[20px] font-medium text-white">목록</Text>
+      <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9EBDF]"
+      style={{
+                elevation: 0.5,
+                shadowColor: "#000000",
+                shadowOffset: { width: 1, height: 1 },
+                shadowOpacity: 0.3,
+                shadowRadius: 6,
+              }}>
+        <Ionicons name="list" size={25} color="#1F1F1F" />
+        <Text className="ml-2 text-[20px] font-medium text-black">목록</Text>
       </Pressable>
 
       <Link href="/(user)/memory/month" asChild>
-        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#BFBFBF]">
+        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9F7F4]"
+        style={{
+                  elevation: 0.5,
+                  shadowColor: "#000000",
+                  shadowOffset: { width: 1, height: 1 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 6,
+                }}>
           <Ionicons name="calendar-outline" size={25} color="#1F1F1F" />
           <Text className="ml-2 text-[20px] font-medium text-black">달력</Text>
         </Pressable>
       </Link>
 
       <Link href="/(user)/memory/week" asChild>
-        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#BFBFBF]">
+        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9F7F4]"
+        style={{
+                  elevation: 0.5,
+                  shadowColor: "#000000",
+                  shadowOffset: { width: 1, height: 1 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 6,
+                }}>
           <Ionicons name="calendar-clear-outline" size={25} color="#1F1F1F" />
           <Text className="ml-2 text-[20px] font-medium text-black">주간</Text>
         </Pressable>
@@ -74,8 +95,8 @@ function MemoryCard({
   onToggleFavorite: (id: number) => void;
 }) {
   return (
-    <View className="overflow-hidden rounded-[10px] bg-[#EEEEEE]">
-      <View className="min-h-[52px] flex-row items-center justify-between bg-[#CFCFCF] px-6 py-3">
+    <View className="overflow-hidden rounded-[10px] bg-[#FFFBF7] border-2 broder-black">
+      <View className="min-h-[52px] flex-row items-center justify-between bg-[#F9EBDF] px-6 py-3">
         <Text className="flex-1 text-center text-[21px] font-medium text-black">
           {item.displayDate}
         </Text>
@@ -98,7 +119,7 @@ function MemoryCard({
           {item.question}
         </Text>
 
-        <View className="mt-3 min-h-[94px] justify-between bg-[#D8D8D8] px-4 py-4">
+        <View className="mt-3 min-h-[94px] justify-between bg-white px-4 py-4 border-1 border-[#F9EBDF]">
           <Text className="text-[19px] font-medium text-[#8A8A8A]">
             {item.answerPreview ?? "답변..."}
           </Text>
@@ -141,13 +162,13 @@ export default function GuardianMemoryListScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-[#FDF2EC]">
       <ScrollView
         className="flex-1"
         contentContainerClassName="px-5 pb-6 pt-[30px]"
         showsVerticalScrollIndicator={false}
       >
-        <View className="h-[56px] flex-row items-center bg-[#D9D9D9] px-3">
+        <View className="h-[56px] flex-row items-center bg-white px-3">
           <Ionicons name="search-outline" size={38} color="#858585" />
           <TextInput
             accessibilityLabel="기억 검색"
@@ -171,18 +192,23 @@ export default function GuardianMemoryListScreen() {
             return (
               <Pressable
                 key={chip.key}
-                className={`h-[46px] min-w-[56px] flex-row items-center justify-center rounded-[23px] px-7 ${
-                  isActive ? "bg-[#858585]" : "bg-[#D9D9D9]"
+                className={`my-1 h-[46px] min-w-[56px] flex-row items-center justify-center rounded-[23px] px-7 ${
+                  isActive ? "bg-[#F9EBDF]" : "bg-[#F9F7F4]"
                 }`}
+                style={{
+                  elevation: 0.5,
+                  shadowColor: "#000000",
+                  shadowOffset: { width: 0.5, height: 0.5 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 6,
+                }}
                 onPress={() => setActiveFilter(chip.key)}
               >
                 {"icon" in chip ? (
-                  <Ionicons name={chip.icon} size={30} color="#4D4D4D" />
+                  <Ionicons name={chip.icon} size={30} color="#1F1F1F" />
                 ) : (
                   <Text
-                    className={`text-[19px] font-medium ${
-                      isActive ? "text-white" : "text-black"
-                    }`}
+                    className="text-[19px] font-medium text-black"
                   >
                     {chip.label}
                   </Text>

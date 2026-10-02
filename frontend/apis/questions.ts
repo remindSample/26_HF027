@@ -13,8 +13,10 @@ export type QuestionResponse = {
   created_at: string;
 };
 
-export function getQuestionsByUser(userId = getCurrentUserId()) {
-  return apiRequest<QuestionResponse[]>(`/questions/user/${userId}`);
+export async function getQuestionsByUser(userId?: number) {
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
+  return apiRequest<QuestionResponse[]>(`/questions/user/${resolvedUserId}`);
 }
 
 export type QuestionTag =
@@ -26,12 +28,14 @@ export type QuestionTag =
   | "childhood"
   | "friend";
 
-export function generateQuestion(tag: QuestionTag, userId = getCurrentUserId()) {
+export async function generateQuestion(tag: QuestionTag, userId?: number) {
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
   return apiRequest<QuestionResponse>("/questions/generate", {
     method: "POST",
     body: JSON.stringify({
       tag,
-      target_user_id: userId,
+      target_user_id: resolvedUserId,
     }),
   });
 }
