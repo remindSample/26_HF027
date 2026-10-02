@@ -1,5 +1,11 @@
 import Header from "@/components/Header";
-import { router } from "expo-router";
+import {
+  getAuthSession,
+  getGuardianLinksByGuardian,
+  getUser,
+} from "@/apis";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 // 데모용 mock 데이터 (실제 API 연결 시 교체)
@@ -17,7 +23,67 @@ const MOCK_DATA = {
 const CALENDAR_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const COMPLETED_DATES = [1, 2, 3, 5, 7, 8, 10, 11];
 
+type ElderStatus = "loading" | "found" | "none";
+
 export default function ActivityReportScreen() {
+  const [elderStatus, setElderStatus] = useState<ElderStatus>("loading");
+  const [elderName, setElderName] = useState<string | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadElder() {
+        setElderStatus("loading");
+        try {
+          const session = await getAuthSession();
+          const guardianId = session?.user.id;
+          if (!guardianId) {
+            if (isMounted) {
+              setElderName(null);
+              setElderStatus("none");
+            }
+            return;
+          }
+
+          const links = await getGuardianLinksByGuardian(guardianId);
+          const acceptedLink = links.find((link) => link.status === "accepted");
+          if (!acceptedLink) {
+            if (isMounted) {
+              setElderName(null);
+              setElderStatus("none");
+            }
+            return;
+          }
+
+          const elder = await getUser(acceptedLink.elder_id);
+          if (isMounted) {
+            setElderName(elder.name);
+            setElderStatus("found");
+          }
+        } catch {
+          if (isMounted) {
+            setElderName(null);
+            setElderStatus("none");
+          }
+        }
+      }
+
+      loadElder();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
+
+  const elderHeadingText =
+    elderStatus === "found" && elderName
+      ? `${elderName} 어르신의 인지 건강 분석`
+      : elderStatus === "loading"
+      ? "어르신 정보를 불러오는 중입니다..."
+      : "연결된 어르신이 없습니다";
+
   return (
     <View className="flex-1 bg-[#F0F8FF]">
       <Header title="활동 리포트" />
@@ -28,7 +94,7 @@ export default function ActivityReportScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text className="text-base font-semibold text-[#333333]">
-          김순자 어르신의 인지 건강 분석
+          {elderHeadingText}
         </Text>
 
         {/* 요약 카드 */}
