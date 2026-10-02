@@ -1,8 +1,16 @@
+import {
+  getAuthSession,
+  getGuardianLinksByGuardian,
+  getMonthlyAnswerReport,
+  getMonthlyGameReport,
+  getUser,
+  type AnswerResponse,
+  type MonthlyGameReport,
+} from "@/apis";
 import Header from "@/components/Header";
-import { getMonthlyAnswerReport, getMonthlyGameReport, type AnswerResponse, type MonthlyGameReport } from "@/apis";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 const CALENDAR_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -20,6 +28,8 @@ function diffColorClass(pct: number | null) {
   return "text-[#5BA4A4]";
 }
 
+type ElderStatus = "loading" | "found" | "none";
+
 export default function ActivityReportScreen() {
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth() + 1);
@@ -30,6 +40,9 @@ export default function ActivityReportScreen() {
   const [avgComplexityScore, setAvgComplexityScore] = useState(0);
   const [complexityDiffPct, setComplexityDiffPct] = useState<number | null>(null);
   const [gameReport, setGameReport] = useState<MonthlyGameReport | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [elderStatus, setElderStatus] = useState<ElderStatus>("loading");
+  const [elderName, setElderName] = useState<string | null>(null);
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
   const firstDayOffset = new Date(currentYear, currentMonth - 1, 1).getDay();
 
@@ -50,10 +63,38 @@ export default function ActivityReportScreen() {
       let isMounted = true;
 
       async function loadReport() {
+        setIsLoading(true);
+        setElderStatus("loading");
         try {
-          const report = await getMonthlyAnswerReport(currentYear, currentMonth);
-          const gameData = await getMonthlyGameReport(currentYear, currentMonth);
+          const session = await getAuthSession();
+          const guardianId = session?.user.id;
+          if (!guardianId) {
+            if (isMounted) {
+              setElderName(null);
+              setElderStatus("none");
+            }
+            return;
+          }
+
+          const links = await getGuardianLinksByGuardian(guardianId);
+          const acceptedLink = links.find((link) => link.status === "accepted");
+          if (!acceptedLink) {
+            if (isMounted) {
+              setElderName(null);
+              setElderStatus("none");
+            }
+            return;
+          }
+
+          const [elder, report, gameData] = await Promise.all([
+            getUser(acceptedLink.elder_id),
+            getMonthlyAnswerReport(currentYear, currentMonth, acceptedLink.elder_id),
+            getMonthlyGameReport(currentYear, currentMonth, acceptedLink.elder_id),
+          ]);
+
           if (isMounted) {
+            setElderName(elder.name);
+            setElderStatus("found");
             setAnswers(report.answers);
             setAiComment(report.ai_comment);
             setAvgWordCount(report.avg_word_count);
@@ -64,6 +105,8 @@ export default function ActivityReportScreen() {
           }
         } catch {
           if (isMounted) {
+            setElderName(null);
+            setElderStatus("none");
             setAnswers([]);
             setAiComment("코멘트를 불러오지 못했습니다.");
             setAvgWordCount(0);
@@ -71,6 +114,10 @@ export default function ActivityReportScreen() {
             setAvgComplexityScore(0);
             setComplexityDiffPct(null);
             setGameReport(null);
+          }
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
           }
         }
       }
@@ -91,7 +138,6 @@ export default function ActivityReportScreen() {
       return acc;
     }, {});
   }, [answers]);
-
   const complexityScoreOutOf100 = Math.round(
     Math.min((avgComplexityScore / 10) * 100, 100)
   );
@@ -107,6 +153,12 @@ export default function ActivityReportScreen() {
     answers.length > 0
       ? `${currentMonth}월 답변 ${answers.length}개와 게임 ${gameReport?.session_count ?? 0}회 기록을 바탕으로 리포트가 생성됐습니다.`
       : "이번 달 답변 기록이 아직 없습니다.";
+  const elderHeadingText =
+    elderStatus === "found" && elderName
+      ? `${elderName} 어르신의 인지 건강 분석`
+      : elderStatus === "loading"
+      ? "어르신 정보를 불러오는 중입니다..."
+      : "연결된 어르신이 없습니다";
 
   return (
     <View className="flex-1 bg-[#F0F8FF]">
@@ -118,10 +170,9 @@ export default function ActivityReportScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text className="text-base font-semibold text-[#333333]">
-          김순자 어르신의 인지 건강 분석
+          {elderHeadingText}
         </Text>
 
-        {/* 요약 카드 */}
         <View
           className="bg-white rounded-[14px] p-4 gap-3"
           style={{ elevation: 1 }}
@@ -162,7 +213,6 @@ export default function ActivityReportScreen() {
           </View>
         </View>
 
-        {/* 활동 캘린더 */}
         <View className="bg-white rounded-[14px] p-4" style={{ elevation: 1 }}>
           <View className="flex-row justify-between mb-3">
             <Text className="text-[15px] font-bold text-[#333333]">
@@ -172,6 +222,12 @@ export default function ActivityReportScreen() {
               ‹ {currentYear}.{String(currentMonth).padStart(2, "0")} ›
             </Text>
           </View>
+
+          {isLoading && (
+            <View className="items-center py-3">
+              <ActivityIndicator color="#5BA4A4" />
+            </View>
+          )}
 
           <View className="flex-row flex-wrap">
             {CALENDAR_DAYS.map((d) => (
@@ -198,7 +254,7 @@ export default function ActivityReportScreen() {
                   >
                     {day}
                   </Text>
-              {done && (
+                  {done && (
                     <Text className="text-[8px] text-[#5BA4A4] mt-0.5">●</Text>
                   )}
                 </View>
@@ -214,7 +270,6 @@ export default function ActivityReportScreen() {
           </View>
         </View>
 
-        {/* 단어/복잡도 수치 */}
         <View className="flex-row gap-3">
           <View
             className="flex-1 bg-white rounded-[14px] p-4 items-center gap-1.5"
@@ -242,7 +297,6 @@ export default function ActivityReportScreen() {
           </View>
         </View>
 
-        {/* 보호자 메모 */}
         <View className="bg-white rounded-[14px] p-4" style={{ elevation: 1 }}>
           <View className="flex-row justify-between mb-2.5">
             <Text className="text-[15px] font-bold text-[#333333]">
@@ -255,7 +309,6 @@ export default function ActivityReportScreen() {
           </Text>
         </View>
       </ScrollView>
-
     </View>
   );
 }

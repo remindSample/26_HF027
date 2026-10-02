@@ -1,5 +1,11 @@
+import {
+  getAuthSession,
+  getMonthlyAnswerReport,
+  getMonthlyGameReport,
+  type AnswerResponse,
+  type MonthlyGameReport,
+} from "@/apis";
 import Header from "@/components/Header";
-import { getMonthlyAnswerReport, getMonthlyGameReport, type AnswerResponse, type MonthlyGameReport } from "@/apis";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
@@ -31,6 +37,7 @@ export default function ActivityReportScreen() {
   const [complexityDiffPct, setComplexityDiffPct] = useState<number | null>(null);
   const [gameReport, setGameReport] = useState<MonthlyGameReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userName, setUserName] = useState<string | null>(null);
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
   const firstDayOffset = new Date(currentYear, currentMonth - 1, 1).getDay();
 
@@ -48,55 +55,53 @@ export default function ActivityReportScreen() {
 
   useFocusEffect(
     useCallback(() => {
-    let isMounted = true;
+      let isMounted = true;
 
-    async function loadAnswers() {
-      setIsLoading(true);
-      try {
-        const report = await getMonthlyAnswerReport(currentYear, currentMonth);
-        const gameData = await getMonthlyGameReport(currentYear, currentMonth);
-        if (isMounted) {
-          setAnswers(report.answers);
-          setAiComment(report.ai_comment);
-          setAvgWordCount(report.avg_word_count);
-          setWordCountDiffPct(report.word_count_diff_pct);
-          setAvgComplexityScore(report.avg_complexity_score);
-          setComplexityDiffPct(report.complexity_diff_pct);
-          setGameReport(gameData);
-        }
-      } catch {
-        if (isMounted) {
-          setAnswers([]);
-          setAiComment("코멘트를 불러오지 못했습니다.");
-          setAvgWordCount(0);
-          setWordCountDiffPct(null);
-          setAvgComplexityScore(0);
-          setComplexityDiffPct(null);
-          setGameReport(null);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
+      async function loadReport() {
+        setIsLoading(true);
+        try {
+          const session = await getAuthSession();
+          const [report, gameData] = await Promise.all([
+            getMonthlyAnswerReport(currentYear, currentMonth, session?.user.id),
+            getMonthlyGameReport(currentYear, currentMonth, session?.user.id),
+          ]);
+
+          if (isMounted) {
+            setUserName(session?.user.name ?? null);
+            setAnswers(report.answers);
+            setAiComment(report.ai_comment);
+            setAvgWordCount(report.avg_word_count);
+            setWordCountDiffPct(report.word_count_diff_pct);
+            setAvgComplexityScore(report.avg_complexity_score);
+            setComplexityDiffPct(report.complexity_diff_pct);
+            setGameReport(gameData);
+          }
+        } catch {
+          if (isMounted) {
+            setUserName(null);
+            setAnswers([]);
+            setAiComment("코멘트를 불러오지 못했습니다.");
+            setAvgWordCount(0);
+            setWordCountDiffPct(null);
+            setAvgComplexityScore(0);
+            setComplexityDiffPct(null);
+            setGameReport(null);
+          }
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
+          }
         }
       }
-    }
 
-    loadAnswers();
+      loadReport();
 
-    return () => {
-      isMounted = false;
-    };
+      return () => {
+        isMounted = false;
+      };
     }, [currentYear, currentMonth])
   );
 
-  const complexityScoreOutOf100 = Math.round(
-    Math.min((avgComplexityScore / 10) * 100, 100)
-  );
-  const gameAccuracy = gameReport?.accuracy ?? null;
-  const averageHealthScore =
-    gameAccuracy === null
-      ? complexityScoreOutOf100
-      : Math.round((complexityScoreOutOf100 + gameAccuracy) / 2);
   const answersByDay = useMemo(() => {
     return answers.reduce<Record<number, AnswerResponse[]>>((acc, answer) => {
       const date = new Date(answer.answered_at);
@@ -105,6 +110,14 @@ export default function ActivityReportScreen() {
       return acc;
     }, {});
   }, [answers]);
+  const complexityScoreOutOf100 = Math.round(
+    Math.min((avgComplexityScore / 10) * 100, 100)
+  );
+  const gameAccuracy = gameReport?.accuracy ?? null;
+  const averageHealthScore =
+    gameAccuracy === null
+      ? complexityScoreOutOf100
+      : Math.round((complexityScoreOutOf100 + gameAccuracy) / 2);
   const missionRate = Math.round(
     Math.min((Object.keys(answersByDay).length / Math.max(daysInMonth, 1)) * 100, 100)
   );
@@ -138,10 +151,9 @@ export default function ActivityReportScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text className="text-base font-semibold text-[#333333]">
-          김순자 어르신의 인지 건강 분석
+          {userName ? `${userName} 어르신의 인지 건강 분석` : "어르신의 인지 건강 분석"}
         </Text>
 
-        {/* 요약 카드 */}
         <View
           className="bg-white rounded-[14px] p-4 gap-3"
           style={{ elevation: 1 }}
@@ -182,7 +194,6 @@ export default function ActivityReportScreen() {
           </View>
         </View>
 
-        {/* 활동 캘린더 */}
         <View className="bg-white rounded-[14px] p-4" style={{ elevation: 1 }}>
           <View className="flex-row justify-between mb-3">
             <Text className="text-[15px] font-bold text-[#333333]">
@@ -242,7 +253,6 @@ export default function ActivityReportScreen() {
           </View>
         </View>
 
-        {/* 단어/복잡도 수치 */}
         <View className="flex-row gap-3">
           <View
             className="flex-1 bg-white rounded-[14px] p-4 items-center gap-1.5"
@@ -270,7 +280,6 @@ export default function ActivityReportScreen() {
           </View>
         </View>
 
-        {/* 보호자 메모 */}
         <View className="bg-white rounded-[14px] p-4" style={{ elevation: 1 }}>
           <View className="flex-row justify-between mb-2.5">
             <Text className="text-[15px] font-bold text-[#333333]">
@@ -283,7 +292,6 @@ export default function ActivityReportScreen() {
           </Text>
         </View>
       </ScrollView>
-
     </View>
   );
 }

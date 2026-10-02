@@ -30,3 +30,9 @@ export function createUser(payload: CreateUserPayload): Promise<UserResponse> {
     body: JSON.stringify(payload),
   });
 }
+
+export function getUser(userId: number): Promise<UserResponse> {
+  return apiRequest<UserResponse>(`/users/${userId}`, {
+    defaultErrorMessage: "사용자 정보를 불러오지 못했습니다.",
+  });
+}
