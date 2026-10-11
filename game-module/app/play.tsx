@@ -46,6 +46,7 @@ function areBothHandsConnected(sides: Side[]) {
 
 const GESTURE_EMOJI: Record<GestureType, string> = {
   PALM: "🖐️",
+  SCISSORS: "✌️",
   FIST: "✊"
 };
 
@@ -157,10 +158,12 @@ export default function GamePlayScreen() {
       const colH = columnHeightRef.current;
       if (colH === 0) return;
 
+      const gestureRoll = Math.random();
       const note: Note = {
         id: genId(),
         pairId,
-        type: Math.random() > 0.5 ? "PALM" : "FIST",
+        // SCISSORS 25%, PALM 37.5%, FIST 37.5% (양손 각각 독립 생성).
+        type: gestureRoll < 0.25 ? "SCISSORS" : gestureRoll < 0.625 ? "PALM" : "FIST",
         lane,
         startTime: Date.now(),
         yAnim: new Animated.Value(-NOTE_SIZE)
@@ -245,6 +248,8 @@ export default function GamePlayScreen() {
   const handleGesture = useCallback(
     (lane: Lane, gesture: GestureType) => {
       latestGestureRef.current[lane] = gesture;
+
+      // SCISSORS도 동일한 자세 비교를 사용한다. SCISSORS 노트와 일치하면 정답이다.
 
       const colH = columnHeightRef.current;
       const laneNotes = notesRef.current.filter((item) => item.lane === lane);
@@ -426,6 +431,13 @@ export default function GamePlayScreen() {
             >
               <Text style={styles.inputEmoji}>🖐️</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityLabel="왼손 SCISSORS 입력"
+              style={styles.inputButton}
+              onPress={() => handleInput("LEFT", "SCISSORS")}
+            >
+              <Text style={styles.inputEmoji}>{GESTURE_EMOJI.SCISSORS}</Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.columnGap} />
           <View style={styles.inputGroup}>
@@ -440,6 +452,13 @@ export default function GamePlayScreen() {
               onPress={() => handleInput("RIGHT", "PALM")}
             >
               <Text style={styles.inputEmoji}>🖐️</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityLabel="오른손 SCISSORS 입력"
+              style={styles.inputButton}
+              onPress={() => handleInput("RIGHT", "SCISSORS")}
+            >
+              <Text style={styles.inputEmoji}>{GESTURE_EMOJI.SCISSORS}</Text>
             </TouchableOpacity>
           </View>
         </View>

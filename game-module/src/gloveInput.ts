@@ -1,5 +1,6 @@
 export type Side = "LEFT" | "RIGHT";
-export type Gesture = "FIST" | "PALM";
+export const GESTURES = ["PALM", "SCISSORS", "FIST"] as const;
+export type Gesture = (typeof GESTURES)[number];
 
 export type GloveInput = {
   side: Side;
@@ -19,9 +20,13 @@ export function parseGloveMessage(message: string): GloveInput | null {
 
 export function parseGestureMessage(message: string): Gesture | null {
   const gesture = message.trim().toUpperCase();
-  if (gesture !== "FIST" && gesture !== "PALM") return null;
+  if (!isGesture(gesture)) return null;
 
   return gesture;
+}
+
+function isGesture(value: string | undefined): value is Gesture {
+  return GESTURES.some((gesture) => gesture === value);
 }
 
 function parseJsonMessage(message: string): GloveInput | null {
@@ -43,7 +48,7 @@ function normalizeInput(sideRaw?: string, gestureRaw?: string): GloveInput | nul
   const gesture = gestureRaw?.trim().toUpperCase();
 
   if (side !== "LEFT" && side !== "RIGHT") return null;
-  if (gesture !== "FIST" && gesture !== "PALM") return null;
+  if (!isGesture(gesture)) return null;
 
   return { side, gesture };
 }

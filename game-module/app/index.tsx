@@ -53,7 +53,7 @@ export default function HomeScreen() {
               </Text>
 
               <Text style={styles.guideText}>
-                주먹과 보자기가 내려오면 똑같이{"\n"}
+                주먹, 보자기, 가위가 내려오면 똑같이{"\n"}
                 따라하세요!
               </Text>
 
