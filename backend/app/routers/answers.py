@@ -15,7 +15,9 @@ from app.schemas.answer import (
     RecentAnswerResponse,
 )
 from app.crud.answer_crud import create_answer, get_answers_by_month, get_recent_answers
+from app.crud.guardian_link_crud import has_accepted_link
 from app.crud.question_crud import get as get_question
+from app.routers.auth import get_current_user
 
 router = APIRouter(prefix="/answers", tags=["answers"])
 
@@ -45,6 +47,29 @@ def get_recent_answer_list(
 ):
     limited_count = min(max(limit, 1), 5)
     rows = get_recent_answers(db, user_id, limited_count)
+    return [
+        RecentAnswerResponse(
+            **AnswerResponse.model_validate(answer).model_dump(),
+            question_content=question_content,
+        )
+        for answer, question_content in rows
+    ]
+
+
+@router.get("/guardian/{elder_id}/recent", response_model=list[RecentAnswerResponse])
+def get_guardian_recent_answer_list(
+    elder_id: int,
+    limit: int = 5,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    if current_user.role != "GUARDIAN":
+        raise HTTPException(status_code=403, detail="보호자 계정만 사용할 수 있습니다.")
+    if not has_accepted_link(db, current_user.id, elder_id):
+        raise HTTPException(status_code=403, detail="연결된 사용자 답변만 조회할 수 있습니다.")
+
+    limited_count = min(max(limit, 1), 5)
+    rows = get_recent_answers(db, elder_id, limited_count)
     return [
         RecentAnswerResponse(
             **AnswerResponse.model_validate(answer).model_dump(),

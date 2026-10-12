@@ -86,6 +86,18 @@ export async function getRecentAnswers(limit = 5, userId?: number) {
   );
 }
 
+export async function getGuardianRecentAnswers(elderId: number, limit = 5) {
+  const session = await getAuthSession();
+
+  return apiRequest<RecentAnswerResponse[]>(
+    `/answers/guardian/${elderId}/recent?limit=${limit}`,
+    {
+      authToken: session?.access_token,
+      defaultErrorMessage: "사용자 답변을 불러오지 못했습니다.",
+    }
+  );
+}
+
 export type MonthlyHistoryItem = {
   year: number;
   month: number;

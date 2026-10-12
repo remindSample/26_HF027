@@ -1,7 +1,19 @@
+import {
+  getCurrentGuardianAcceptedLink,
+  getMonthlyAnswerReport,
+  type AnswerResponse,
+} from "@/apis";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 type MemoryItem = {
   id: number;
@@ -11,57 +23,6 @@ type MemoryItem = {
 };
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
-
-const memoryItems: MemoryItem[] = [
-  {
-    id: 1,
-    isoDate: "2026-04-03",
-    displayDate: "2026년 04월 03일",
-    question: "가장 행복했던 여행지는 어디인가요?",
-  },
-  {
-    id: 2,
-    isoDate: "2026-04-22",
-    displayDate: "2026년 04월 22일",
-    question: "최근에 가장 또렷하게 떠오른 기억은 무엇인가요?",
-  },
-  {
-    id: 3,
-    isoDate: "2026-04-23",
-    displayDate: "2026년 04월 23일",
-    question: "함께 시간을 보내고 싶은 사람은 누구인가요?",
-  },
-  {
-    id: 4,
-    isoDate: "2026-04-24",
-    displayDate: "2026년 04월 24일",
-    question: "오늘 떠오른 따뜻한 장면을 적어보세요.",
-  },
-  {
-    id: 5,
-    isoDate: "2026-04-26",
-    displayDate: "2026년 04월 26일",
-    question: "오래 기억하고 싶은 장소는 어디인가요?",
-  },
-  {
-    id: 6,
-    isoDate: "2026-04-28",
-    displayDate: "2026년 04월 28일",
-    question: "기분이 좋아졌던 순간을 떠올려보세요.",
-  },
-  {
-    id: 7,
-    isoDate: "2026-04-29",
-    displayDate: "2026년 04월 29일",
-    question: "가장 소중한 물건에는 어떤 기억이 있나요?",
-  },
-  {
-    id: 8,
-    isoDate: "2026-04-30",
-    displayDate: "2026년 04월 30일",
-    question: "이번 달에 새롭게 떠오른 기억은 무엇인가요?",
-  },
-];
 
 function getIsoDate(year: number, month: number, day: number) {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -83,23 +44,68 @@ function getCalendarCells(year: number, month: number) {
   return cells;
 }
 
+function toMemoryItem(answer: AnswerResponse): MemoryItem {
+  const answeredAt = new Date(answer.answered_at);
+  const answerText = answer.content_text || answer.ocr_text || "텍스트 답변 없음";
+
+  return {
+    id: answer.id,
+    isoDate: getIsoDate(
+      answeredAt.getFullYear(),
+      answeredAt.getMonth() + 1,
+      answeredAt.getDate(),
+    ),
+    displayDate: `${answeredAt.getFullYear()}년 ${String(
+      answeredAt.getMonth() + 1,
+    ).padStart(2, "0")}월 ${String(answeredAt.getDate()).padStart(2, "0")}일`,
+    question: answerText,
+  };
+}
+
 function MemoryTabs() {
   return (
     <View className="mt-8 flex-row justify-between gap-4">
       <Link href="/(guardian)/memory/list" asChild>
-        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#BFBFBF]">
+        <Pressable
+          className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9F7F4]"
+          style={{
+            elevation: 0.5,
+            shadowColor: "#000000",
+            shadowOffset: { width: 1, height: 1 },
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+          }}
+        >
           <Ionicons name="list" size={25} color="#1F1F1F" />
           <Text className="ml-2 text-[20px] font-medium text-black">목록</Text>
         </Pressable>
       </Link>
 
-      <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#7B7B7B]">
-        <Ionicons name="calendar-outline" size={25} color="#FFFFFF" />
-        <Text className="ml-2 text-[20px] font-medium text-white">달력</Text>
+      <Pressable
+        className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9EBDF]"
+        style={{
+          elevation: 0.5,
+          shadowColor: "#000000",
+          shadowOffset: { width: 1, height: 1 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+        }}
+      >
+        <Ionicons name="calendar-outline" size={25} color="#000000" />
+        <Text className="ml-2 text-[20px] font-medium text-black">달력</Text>
       </Pressable>
 
       <Link href="/(guardian)/memory/week" asChild>
-        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#BFBFBF]">
+        <Pressable
+          className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9F7F4]"
+          style={{
+            elevation: 0.5,
+            shadowColor: "#000000",
+            shadowOffset: { width: 1, height: 1 },
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+          }}
+        >
           <Ionicons name="calendar-clear-outline" size={25} color="#1F1F1F" />
           <Text className="ml-2 text-[20px] font-medium text-black">주간</Text>
         </Pressable>
@@ -141,13 +147,58 @@ function MonthMemoryList({ items }: { items: MemoryItem[] }) {
 }
 
 export default function GuardianMemoryMonthScreen() {
-  const [selectedYear, setSelectedYear] = useState(2026);
-  const [selectedMonth, setSelectedMonth] = useState(4);
+  const today = new Date();
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
   const [pickerType, setPickerType] = useState<"year" | "month" | null>(null);
+  const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadMemories() {
+        setIsLoading(true);
+        try {
+          const link = await getCurrentGuardianAcceptedLink();
+          if (!link) {
+            if (isMounted) {
+              setMemoryItems([]);
+            }
+            return;
+          }
+
+          const report = await getMonthlyAnswerReport(
+            selectedYear,
+            selectedMonth,
+            link.elder_id,
+          );
+          if (isMounted) {
+            setMemoryItems(report.answers.map(toMemoryItem));
+          }
+        } catch {
+          if (isMounted) {
+            setMemoryItems([]);
+          }
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        }
+      }
+
+      loadMemories();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [selectedMonth, selectedYear]),
+  );
 
   const answerDates = useMemo(
     () => new Set(memoryItems.map((item) => item.isoDate)),
-    [],
+    [memoryItems],
   );
   const calendarCells = useMemo(
     () => getCalendarCells(selectedYear, selectedMonth),
@@ -160,7 +211,7 @@ export default function GuardianMemoryMonthScreen() {
           `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`,
         ),
       ),
-    [selectedMonth, selectedYear],
+    [memoryItems, selectedMonth, selectedYear],
   );
 
   const moveMonth = (amount: number) => {
@@ -174,13 +225,13 @@ export default function GuardianMemoryMonthScreen() {
   const months = Array.from({ length: 12 }, (_, index) => index + 1);
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-[#FDF2EC]">
       <ScrollView
         className="flex-1"
         contentContainerClassName="px-5 pb-6 pt-[30px]"
         showsVerticalScrollIndicator={false}
       >
-        <View className="h-[56px] flex-row items-center bg-[#D9D9D9] px-3">
+        <View className="h-[56px] flex-row items-center bg-white px-3">
           <Ionicons name="search-outline" size={38} color="#858585" />
           <TextInput
             accessibilityLabel="기억 검색"
@@ -192,17 +243,17 @@ export default function GuardianMemoryMonthScreen() {
 
         <MemoryTabs />
 
-        <View className="-mx-5 mt-8 bg-[#A9A9A9]">
+        <View className="-mx-5 mt-8 bg-[#FDF2EC]">
           <View className="px-5 pb-7 pt-[26px]">
-            <View className="rounded-[14px] bg-[#DADADA] px-3 pb-4 pt-5">
+            <View className="rounded-[14px] bg-[#BFCBC7]/70 px-3 pb-4 pt-5">
               <View className="flex-row items-center justify-between">
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="이전 달"
-                  className="h-[46px] w-[46px] items-center justify-center rounded-[12px] bg-[#8C8C8C]"
+                  className="h-[46px] w-[46px] items-center justify-center rounded-[12px] bg-[#BFCBC7]"
                   onPress={() => moveMonth(-1)}
                 >
-                  <Ionicons name="chevron-back" size={31} color="#111111" />
+                  <Ionicons name="chevron-back" size={31} color="#ffffff" />
                 </Pressable>
 
                 <View className="flex-row items-center justify-center">
@@ -238,10 +289,10 @@ export default function GuardianMemoryMonthScreen() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="다음 달"
-                  className="h-[46px] w-[46px] items-center justify-center rounded-[12px] bg-[#8C8C8C]"
+                  className="h-[46px] w-[46px] items-center justify-center rounded-[12px] bg-[#BFCBC7]"
                   onPress={() => moveMonth(1)}
                 >
-                  <Ionicons name="chevron-forward" size={31} color="#111111" />
+                  <Ionicons name="chevron-forward" size={31} color="#ffffff" />
                 </Pressable>
               </View>
 
@@ -344,7 +395,13 @@ export default function GuardianMemoryMonthScreen() {
             </View>
           </View>
 
-          <MonthMemoryList items={monthItems} />
+          {isLoading ? (
+            <View className="items-center py-4">
+              <ActivityIndicator color="#174C33" />
+            </View>
+          ) : (
+            <MonthMemoryList items={monthItems} />
+          )}
         </View>
       </ScrollView>
     </View>

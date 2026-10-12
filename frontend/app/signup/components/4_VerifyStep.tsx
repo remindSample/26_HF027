@@ -15,7 +15,7 @@ export default function VerifyStep({
   onVerify,
 }: Props) {
   return (
-    <View className="flex-1 bg-white px-[30px]">
+    <View className="flex-1 bg-[#FDF2EC] px-[30px]">
       <Text className="mt-[80px] ml-[30px] text-[52px] font-normal text-black">
         인증번호 입력
       </Text>

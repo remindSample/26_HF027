@@ -37,7 +37,7 @@ export default function GuardianLayout() {
 
   if (isSessionLoading) {
     return (
-      <SafeAreaView edges={["top"]} className="flex-1 items-center justify-center bg-white">
+      <SafeAreaView edges={["top"]} className="flex-1 items-center justify-center bg-[#FDF2EC]">
         <ActivityIndicator color="#5BA4A4" />
       </SafeAreaView>
     );
@@ -49,7 +49,7 @@ export default function GuardianLayout() {
 
   return (
     /*상단만 safeArea 적용*/
-    <SafeAreaView edges={["top"]} className="flex-1 bg-white">
+    <SafeAreaView edges={["top"]} className="flex-1 bg-[#FDF2EC]">
         <View className="flex-1">
           <Slot />
         </View>

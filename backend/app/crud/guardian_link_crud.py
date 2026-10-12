@@ -20,6 +20,54 @@ def get_links_by_elder(db: Session, elder_id: int) -> list[GuardianLink]:
     return db.query(GuardianLink).filter(GuardianLink.elder_id == elder_id).all()
 
 
+def get_link(db: Session, link_id: int) -> GuardianLink | None:
+    return db.get(GuardianLink, link_id)
+
+
+def get_active_link_by_guardian(db: Session, guardian_id: int) -> GuardianLink | None:
+    return db.query(GuardianLink).filter(
+        GuardianLink.guardian_id == guardian_id,
+        GuardianLink.status.in_(["pending", "accepted"]),
+    ).first()
+
+
+def get_active_link_by_elder(db: Session, elder_id: int) -> GuardianLink | None:
+    return db.query(GuardianLink).filter(
+        GuardianLink.elder_id == elder_id,
+        GuardianLink.status.in_(["pending", "accepted"]),
+    ).first()
+
+
+def get_active_link_by_pair(db: Session, guardian_id: int, elder_id: int) -> GuardianLink | None:
+    return db.query(GuardianLink).filter(
+        GuardianLink.guardian_id == guardian_id,
+        GuardianLink.elder_id == elder_id,
+        GuardianLink.status.in_(["pending", "accepted"]),
+    ).first()
+
+
+def get_accepted_link_by_guardian(db: Session, guardian_id: int) -> GuardianLink | None:
+    return db.query(GuardianLink).filter(
+        GuardianLink.guardian_id == guardian_id,
+        GuardianLink.status == "accepted",
+    ).first()
+
+
+def get_accepted_link_by_elder(db: Session, elder_id: int) -> GuardianLink | None:
+    return db.query(GuardianLink).filter(
+        GuardianLink.elder_id == elder_id,
+        GuardianLink.status == "accepted",
+    ).first()
+
+
+def has_accepted_link(db: Session, guardian_id: int, elder_id: int) -> bool:
+    return db.query(GuardianLink).filter(
+        GuardianLink.guardian_id == guardian_id,
+        GuardianLink.elder_id == elder_id,
+        GuardianLink.status == "accepted",
+    ).first() is not None
+
+
 def update_status(db: Session, link_id: int, status: str) -> GuardianLink | None:
     link = db.get(GuardianLink, link_id)
     if not link:

@@ -31,7 +31,7 @@ export default function Header({
   onDismissKeyboard = Keyboard.dismiss,
 
   showSettingButton = false,
-  onPressSetting,
+  onPressSetting = () => router.push("/(guardian)/settings"),
 }: HeaderProps) {
   return (
     <View className="relative h-[48px] w-full flex-row items-center justify-between">

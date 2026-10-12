@@ -6,7 +6,7 @@ type Props = {
 
 export default function CompleteStep({ onGoHome }: Props) {
   return (
-    <View className="flex-1 bg-white px-[30px]">
+    <View className="flex-1 bg-[#FDF2EC] px-[30px]">
       <Text className="mt-[28px] text-[28px] font-normal text-black">
         환영합니다!
       </Text>

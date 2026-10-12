@@ -8,6 +8,10 @@ class GuardianLinkCreate(BaseModel):
     elder_id: int
 
 
+class GuardianInviteCreate(BaseModel):
+    invite_code: str
+
+
 class GuardianLinkUpdate(BaseModel):
     status: Literal["accepted", "rejected"]
 

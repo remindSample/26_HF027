@@ -12,7 +12,7 @@ export default function SelectMethodStep({
   onKakaoSignup,
 }: Props) {
   return (
-    <View className="flex-1 bg-white px-[30px]">
+    <View className="flex-1 bg-[#FDF2EC] px-[30px]">
       <View className="mt-[21px] h-[1px] bg-[#8A8A8A]" />
 
       <Text className="mt-[28px] text-[24px] leading-[29px] text-black">
