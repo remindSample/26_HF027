@@ -1,11 +1,41 @@
 import Header from "@/components/Header";
+import { getMonthlyAnswerReport } from "@/apis";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-const CURRENT_MONTH = "2026년 9월";
-
 export default function ReportMainScreen() {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const [answerCount, setAnswerCount] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadReport() {
+        try {
+          const report = await getMonthlyAnswerReport(currentYear, currentMonth);
+          if (isMounted) {
+            setAnswerCount(report.answer_count);
+          }
+        } catch {
+          if (isMounted) {
+            setAnswerCount(0);
+          }
+        }
+      }
+
+      loadReport();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [currentMonth, currentYear])
+  );
+
   return (
     <View className="flex-1 bg-[#FDF2EC]">
       <Header title="인지변화보고서" />
@@ -28,12 +58,12 @@ export default function ReportMainScreen() {
             <View className="flex-row items-center gap-2.5">
               <Ionicons name="calendar-outline" size={28} color="#242428" />
               <Text className="text-[22px] font-medium text-[#174C33]">
-                {CURRENT_MONTH} 리포트
+                {currentYear}년 {currentMonth}월 리포트
               </Text>
             </View>
             <View className="border border-[#8A8A8A] bg-[#FDF2EC] rounded-lg px-2 py-1.5">
               <Text className="text-[16px] font-medium text-[#111111]">
-                2/2 완료
+                {answerCount}개 답변
               </Text>
             </View>
           </View>
@@ -41,7 +71,7 @@ export default function ReportMainScreen() {
           <View className="flex-row bg-[#FFFDFB] px-4 py-10 items-center gap-6">
             <View className="w-[104px] h-[86px] bg-[#D9D9D9] rounded-lg" />
             <Text className="flex-1 text-[22px] text-[#111111] leading-[34px]">
-              최근 답변 참여가{"\n"}안정적이에요!
+              이번 달 답변 기록이{"\n"}리포트에 반영됐어요!
             </Text>
           </View>
         </View>

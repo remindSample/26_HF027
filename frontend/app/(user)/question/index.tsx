@@ -60,6 +60,8 @@ const QUESTION_TAGS: { label: string; value: QuestionTag }[] = [
   { label: "여행", value: "travel" },
   { label: "계절", value: "season" },
   { label: "취미", value: "hobby" },
+  { label: "어린시절", value: "childhood" },
+  { label: "친구", value: "friend" },
 ];
 
 function toQuestion(question: QuestionResponse): Question {

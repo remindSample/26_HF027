@@ -1,14 +1,14 @@
+import {
+  getAuthSession,
+  getMonthlyAnswerReport,
+  getMonthlyGameReport,
+  type AnswerResponse,
+  type MonthlyGameReport,
+} from "@/apis";
 import Header from "@/components/Header";
-import { getAuthSession, getMonthlyAnswerReport, type AnswerResponse } from "@/apis";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
-
-// 데모용 mock 데이터 (게임 API 연동 전까지 유지)
-const MOCK_DATA = {
-  score: 88,
-  mission_rate: 94,
-};
 
 const CALENDAR_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -27,23 +27,25 @@ function diffColorClass(pct: number | null) {
 }
 
 export default function ActivityReportScreen() {
-  const [now, setNow] = useState(() => new Date());
+  const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth() + 1);
   const [answers, setAnswers] = useState<AnswerResponse[]>([]);
   const [aiComment, setAiComment] = useState("");
   const [avgWordCount, setAvgWordCount] = useState(0);
   const [wordCountDiffPct, setWordCountDiffPct] = useState<number | null>(null);
   const [avgComplexityScore, setAvgComplexityScore] = useState(0);
   const [complexityDiffPct, setComplexityDiffPct] = useState<number | null>(null);
+  const [gameReport, setGameReport] = useState<MonthlyGameReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
   const firstDayOffset = new Date(currentYear, currentMonth - 1, 1).getDay();
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setNow(new Date());
+      const nextDate = new Date();
+      setCurrentYear(nextDate.getFullYear());
+      setCurrentMonth(nextDate.getMonth() + 1);
     }, 60000);
 
     return () => {
@@ -53,71 +55,51 @@ export default function ActivityReportScreen() {
 
   useFocusEffect(
     useCallback(() => {
-    let isMounted = true;
-
-    async function loadAnswers() {
-      setIsLoading(true);
-      try {
-        const report = await getMonthlyAnswerReport(currentYear, currentMonth);
-        if (isMounted) {
-          setAnswers(report.answers);
-          setAiComment(report.ai_comment);
-          setAvgWordCount(report.avg_word_count);
-          setWordCountDiffPct(report.word_count_diff_pct);
-          setAvgComplexityScore(report.avg_complexity_score);
-          setComplexityDiffPct(report.complexity_diff_pct);
-        }
-      } catch {
-        if (isMounted) {
-          setAnswers([]);
-          setAiComment("코멘트를 불러오지 못했습니다.");
-          setAvgWordCount(0);
-          setWordCountDiffPct(null);
-          setAvgComplexityScore(0);
-          setComplexityDiffPct(null);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadAnswers();
-
-    return () => {
-      isMounted = false;
-    };
-    }, [currentYear, currentMonth])
-  );
-
-  useFocusEffect(
-    useCallback(() => {
       let isMounted = true;
 
-      async function loadUserName() {
+      async function loadReport() {
+        setIsLoading(true);
         try {
           const session = await getAuthSession();
+          const [report, gameData] = await Promise.all([
+            getMonthlyAnswerReport(currentYear, currentMonth, session?.user.id),
+            getMonthlyGameReport(currentYear, currentMonth, session?.user.id),
+          ]);
+
           if (isMounted) {
             setUserName(session?.user.name ?? null);
+            setAnswers(report.answers);
+            setAiComment(report.ai_comment);
+            setAvgWordCount(report.avg_word_count);
+            setWordCountDiffPct(report.word_count_diff_pct);
+            setAvgComplexityScore(report.avg_complexity_score);
+            setComplexityDiffPct(report.complexity_diff_pct);
+            setGameReport(gameData);
           }
         } catch {
           if (isMounted) {
             setUserName(null);
+            setAnswers([]);
+            setAiComment("코멘트를 불러오지 못했습니다.");
+            setAvgWordCount(0);
+            setWordCountDiffPct(null);
+            setAvgComplexityScore(0);
+            setComplexityDiffPct(null);
+            setGameReport(null);
+          }
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
           }
         }
       }
 
-      loadUserName();
+      loadReport();
 
       return () => {
         isMounted = false;
       };
-    }, [])
-  );
-
-  const complexityScoreOutOf100 = Math.round(
-    Math.min((avgComplexityScore / 10) * 100, 100)
+    }, [currentYear, currentMonth])
   );
 
   const answersByDay = useMemo(() => {
@@ -128,6 +110,21 @@ export default function ActivityReportScreen() {
       return acc;
     }, {});
   }, [answers]);
+  const complexityScoreOutOf100 = Math.round(
+    Math.min((avgComplexityScore / 10) * 100, 100)
+  );
+  const gameAccuracy = gameReport?.accuracy ?? null;
+  const averageHealthScore =
+    gameAccuracy === null
+      ? complexityScoreOutOf100
+      : Math.round((complexityScoreOutOf100 + gameAccuracy) / 2);
+  const missionRate = Math.round(
+    Math.min((Object.keys(answersByDay).length / Math.max(daysInMonth, 1)) * 100, 100)
+  );
+  const guardianMemo =
+    answers.length > 0
+      ? `${currentMonth}월 답변 ${answers.length}개와 게임 ${gameReport?.session_count ?? 0}회 기록을 바탕으로 리포트가 생성됐습니다.`
+      : "이번 달 답변 기록이 아직 없습니다.";
 
   const handlePressDay = (day: number) => {
     const dayAnswers = answersByDay[day] ?? [];
@@ -157,7 +154,6 @@ export default function ActivityReportScreen() {
           {userName ? `${userName} 어르신의 인지 건강 분석` : "어르신의 인지 건강 분석"}
         </Text>
 
-        {/* 요약 카드 */}
         <View
           className="bg-white rounded-[14px] p-4 gap-3"
           style={{ elevation: 1 }}
@@ -178,7 +174,7 @@ export default function ActivityReportScreen() {
               <Text className="text-2xl">🏆</Text>
               <Text className="text-xs text-[#777777]">평균 건강 점수</Text>
               <Text className="text-[22px] font-extrabold text-[#222222]">
-                {MOCK_DATA.score}점
+                {averageHealthScore}점
               </Text>
             </View>
             <View className="w-px h-[50px] bg-[#E0E0E0]" />
@@ -186,7 +182,7 @@ export default function ActivityReportScreen() {
               <Text className="text-2xl">✅</Text>
               <Text className="text-xs text-[#777777]">미션 완료율</Text>
               <Text className="text-[22px] font-extrabold text-[#222222]">
-                {MOCK_DATA.mission_rate}%
+                {missionRate}%
               </Text>
             </View>
           </View>
@@ -198,7 +194,6 @@ export default function ActivityReportScreen() {
           </View>
         </View>
 
-        {/* 활동 캘린더 */}
         <View className="bg-white rounded-[14px] p-4" style={{ elevation: 1 }}>
           <View className="flex-row justify-between mb-3">
             <Text className="text-[15px] font-bold text-[#333333]">
@@ -258,7 +253,6 @@ export default function ActivityReportScreen() {
           </View>
         </View>
 
-        {/* 단어/복잡도 수치 */}
         <View className="flex-row gap-3">
           <View
             className="flex-1 bg-white rounded-[14px] p-4 items-center gap-1.5"
@@ -286,7 +280,6 @@ export default function ActivityReportScreen() {
           </View>
         </View>
 
-        {/* 보호자 메모 */}
         <View className="bg-white rounded-[14px] p-4" style={{ elevation: 1 }}>
           <View className="flex-row justify-between mb-2.5">
             <Text className="text-[15px] font-bold text-[#333333]">
@@ -295,11 +288,10 @@ export default function ActivityReportScreen() {
             <Text className="text-lg">✏️</Text>
           </View>
           <Text className="text-sm text-[#555555] leading-[22px]">
-            산책을 자주 하시고, 가족과의 추억을 떠올려보세요.
+            {guardianMemo}
           </Text>
         </View>
       </ScrollView>
-
     </View>
   );
 }

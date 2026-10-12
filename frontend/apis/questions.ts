@@ -19,7 +19,14 @@ export async function getQuestionsByUser(userId?: number) {
   return apiRequest<QuestionResponse[]>(`/questions/user/${resolvedUserId}`);
 }
 
-export type QuestionTag = "family" | "food" | "travel" | "season" | "hobby";
+export type QuestionTag =
+  | "family"
+  | "food"
+  | "travel"
+  | "season"
+  | "hobby"
+  | "childhood"
+  | "friend";
 
 export async function generateQuestion(tag: QuestionTag, userId?: number) {
   const resolvedUserId = userId ?? await getCurrentUserId();

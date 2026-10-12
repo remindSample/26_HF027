@@ -33,3 +33,15 @@ class SessionResult(BaseModel):
 class SessionFinish(BaseModel):
     success_count: int
     total_count: int
+
+
+class MonthlyGameReport(BaseModel):
+    year: int
+    month: int
+    session_count: int
+    success_count: int
+    total_count: int
+    accuracy: float | None
+    accuracy_diff_pct: float | None
+    total_score: int
+    has_last_month_data: bool

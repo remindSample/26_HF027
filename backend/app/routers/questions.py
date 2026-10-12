@@ -14,6 +14,8 @@ TAG_PROMPTS = {
     "travel": ("여행", "memory_recall"),
     "season": ("계절", "sensory_memory"),
     "hobby": ("취미", "preference"),
+    "childhood": ("어린 시절", "autobiographical"),
+    "friend": ("친구", "social_relationship"),
 }
 
 

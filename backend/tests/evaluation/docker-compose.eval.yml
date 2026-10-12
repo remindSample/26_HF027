@@ -1,0 +1,55 @@
+services:
+  eval-mysql:
+    image: mysql:8.4
+    container_name: remind-eval-mysql
+    environment:
+      MYSQL_DATABASE: ${REMIND_EVAL_DB_NAME:-remind_eval}
+      MYSQL_USER: ${REMIND_EVAL_DB_USER:-remind_eval}
+      MYSQL_PASSWORD: ${REMIND_EVAL_DB_PASSWORD:?Set REMIND_EVAL_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${REMIND_EVAL_DB_PASSWORD:?Set REMIND_EVAL_DB_PASSWORD}
+    ports:
+      - "127.0.0.1:3307:3306"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -u${REMIND_EVAL_DB_USER:-remind_eval} -p${REMIND_EVAL_DB_PASSWORD} --silent",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - remind-eval-mysql-data:/var/lib/mysql
+
+  eval-backend:
+    container_name: remind-eval-backend
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: eval-mysql
+      DB_PORT: 3306
+      DB_USER: ${REMIND_EVAL_DB_USER:-remind_eval}
+      DB_PASSWORD: ${REMIND_EVAL_DB_PASSWORD:?Set REMIND_EVAL_DB_PASSWORD}
+      DB_NAME: ${REMIND_EVAL_DB_NAME:-remind_eval}
+      SECRET_KEY: ${REMIND_EVAL_SECRET_KEY:-local-eval-secret-key}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Set OPENAI_API_KEY}
+    ports:
+      - "127.0.0.1:8011:8001"
+    depends_on:
+      eval-mysql:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3).read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  remind-eval-mysql-data:
