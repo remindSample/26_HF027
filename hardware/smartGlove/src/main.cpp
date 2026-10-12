@@ -4,6 +4,9 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
+// =========================
+// BLE UUID
+// =========================
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
@@ -11,17 +14,27 @@ BLECharacteristic *pCharacteristic;
 
 bool deviceConnected = false;
 
+
 // =========================
 // 플렉스 센서 설정
 // =========================
-const int FLEX_SENSOR_PINS[] = {39, 34, 35};
-const int FLEX_SENSOR_COUNT = 3;
 
-// 센서값이 60 이상이면 굽힌 것으로 판정
-const int GESTURE_THRESHOLD = 60;
+// 총 4개 센서
+// 검지, 중지, 약지, 소지 순서
+#ifdef GLOVE_SIDE_RIGHT
+const int FLEX_SENSOR_PINS[] = {39, 34, 35, 15};
+#else
+const int FLEX_SENSOR_PINS[] = {15, 35, 34, 39};
+#endif
+const int FLEX_SENSOR_COUNT = 4;
 
-// 노이즈 완화를 위해 한 센서당 5회 측정 후 평균
+// 검지/중지는 900 이상, 약지/소지는 50 이상이면 굽힌 것으로 판정
+const int GESTURE_THRESHOLDS[] = {900, 900, 50, 50};
+
+// 노이즈 완화를 위해
+// 한 센서당 5회 측정 후 평균
 const int SAMPLE_COUNT = 5;
+
 
 // =========================
 // BLE 반복 전송 설정
@@ -56,13 +69,13 @@ const char *GLOVE_SIDE = "LEFT";
 // =========================
 class MyServerCallbacks : public BLEServerCallbacks {
 
-  void onConnect(BLEServer *pServer) {
+  void onConnect(BLEServer *pServer) override {
     deviceConnected = true;
 
     Serial.println("BLE 연결됨");
   }
 
-  void onDisconnect(BLEServer *pServer) {
+  void onDisconnect(BLEServer *pServer) override {
     deviceConnected = false;
 
     Serial.println("BLE 연결 해제됨");
@@ -92,33 +105,44 @@ int readFlexSmoothed(int pin) {
 // =========================
 // 손가락 굽힘 판정
 // =========================
-bool isFingerBent(int value) {
+bool isFingerBent(int value, int fingerIndex) {
 
-  return value >= GESTURE_THRESHOLD;
+  return value >= GESTURE_THRESHOLDS[fingerIndex];
 }
 
 
 // =========================
-// FIST / PALM 판정
+// PALM / SCISSORS / FIST 판정
 // =========================
 const char *detectPose(int values[]) {
 
   int bentCount = 0;
 
+  // 굽혀진 센서 개수 계산
   for (int i = 0; i < FLEX_SENSOR_COUNT; i++) {
 
-    if (isFingerBent(values[i])) {
+    if (isFingerBent(values[i], i)) {
       bentCount++;
     }
   }
 
-  // 센서 3개 중 2개 이상 굽힘
-  if (bentCount >= 2) {
-    return "FIST";
+
+  // =========================
+  // 자세 판정
+  // =========================
+
+  // 0개 굽힘
+  if (bentCount == 0) {
+    return "PALM";
   }
 
-  // 센서 0개 또는 1개만 굽힘
-  return "PALM";
+  // 1~2개 굽힘
+  if (bentCount <= 2) {
+    return "SCISSORS";
+  }
+
+  // 3~4개 굽힘
+  return "FIST";
 }
 
 
@@ -129,12 +153,25 @@ void setup() {
 
   Serial.begin(115200);
 
-  Serial.println();
-  Serial.println("ESP32 시작");
+  delay(500);
 
-  // -------------------------
+  Serial.println();
+  Serial.println("==============================");
+  Serial.println("ReMind Smart Glove 시작");
+  Serial.println("==============================");
+
+
+  // =========================
+  // ADC 핀 설정
+  // =========================
+  for (int i = 0; i < FLEX_SENSOR_COUNT; i++) {
+    pinMode(FLEX_SENSOR_PINS[i], INPUT);
+  }
+
+
+  // =========================
   // BLE 초기화
-  // -------------------------
+  // =========================
   BLEDevice::init(DEVICE_NAME);
 
   BLEServer *pServer =
@@ -144,10 +181,12 @@ void setup() {
       new MyServerCallbacks()
   );
 
+
   BLEService *pService =
       pServer->createService(
           SERVICE_UUID
       );
+
 
   pCharacteristic =
       pService->createCharacteristic(
@@ -155,16 +194,20 @@ void setup() {
           BLECharacteristic::PROPERTY_NOTIFY
       );
 
+
   pCharacteristic->addDescriptor(
       new BLE2902()
   );
 
+
   pService->start();
+
 
   BLEAdvertising *pAdvertising =
       BLEDevice::getAdvertising();
 
   pAdvertising->start();
+
 
   Serial.printf(
       "BLE 시작됨: %s\n",
@@ -174,6 +217,8 @@ void setup() {
   Serial.println(
       "BLE 연결 대기 중..."
   );
+
+  Serial.println();
 }
 
 
@@ -185,9 +230,9 @@ void loop() {
   int values[FLEX_SENSOR_COUNT];
 
 
-  // -------------------------
+  // =========================
   // 센서값 읽기
-  // -------------------------
+  // =========================
   for (int i = 0; i < FLEX_SENSOR_COUNT; i++) {
 
     values[i] =
@@ -197,36 +242,38 @@ void loop() {
   }
 
 
-  // -------------------------
-  // 평균값 계산
-  // 모니터 확인용이며
-  // 실제 FIST/PALM 판정에는 사용하지 않음
-  // -------------------------
+  // =========================
+  // 센서 평균값 계산
+  // Serial Monitor 확인용
+  // =========================
+  int total = 0;
+
+  for (int i = 0; i < FLEX_SENSOR_COUNT; i++) {
+    total += values[i];
+  }
+
   int average =
-      (values[0] +
-       values[1] +
-       values[2])
-      / FLEX_SENSOR_COUNT;
+      total / FLEX_SENSOR_COUNT;
 
 
-  // -------------------------
-  // 자세 판정
-  // -------------------------
-  const char *pose =
-      detectPose(values);
-
-
-  // -------------------------
-  // 몇 개 센서가 굽혀졌는지 계산
-  // -------------------------
+  // =========================
+  // 굽힌 손가락 개수 계산
+  // =========================
   int bentCount = 0;
 
   for (int i = 0; i < FLEX_SENSOR_COUNT; i++) {
 
-    if (isFingerBent(values[i])) {
+    if (isFingerBent(values[i], i)) {
       bentCount++;
     }
   }
+
+
+  // =========================
+  // 자세 판정
+  // =========================
+  const char *pose =
+      detectPose(values);
 
 
   // =========================
@@ -234,22 +281,26 @@ void loop() {
   // =========================
   Serial.printf(
       "POSE:%s | "
-      "39:%d 34:%d 35:%d | "
-      "bent:%d/3 | "
+      "%d:%d %d:%d %d:%d %d:%d | "
+      "bent:%d/4 | "
       "avg:%d | "
-      "threshold:%d\n",
+      "threshold:%d,%d,%d,%d\n",
 
       pose,
 
-      values[0],
-      values[1],
-      values[2],
+      FLEX_SENSOR_PINS[0], values[0],
+      FLEX_SENSOR_PINS[1], values[1],
+      FLEX_SENSOR_PINS[2], values[2],
+      FLEX_SENSOR_PINS[3], values[3],
 
       bentCount,
 
       average,
 
-      GESTURE_THRESHOLD
+      GESTURE_THRESHOLDS[0],
+      GESTURE_THRESHOLDS[1],
+      GESTURE_THRESHOLDS[2],
+      GESTURE_THRESHOLDS[3]
   );
 
 
@@ -261,6 +312,7 @@ void loop() {
     unsigned long now =
         millis();
 
+
     // 이전 자세와 다른지 확인
     bool poseChanged =
         strcmp(
@@ -268,17 +320,19 @@ void loop() {
             lastPose
         ) != 0;
 
-    // 마지막 전송 후 700ms가 지났는지 확인
+
+    // 마지막 전송 후
+    // 700ms가 지났는지 확인
     bool cooldownPassed =
         now - lastNotifyMs
         >= NOTIFY_INTERVAL_MS;
 
 
-    // 자세가 바뀌었거나,
+    // 자세가 바뀌었거나
     // 같은 자세라도 700ms가 지났으면 전송
     if (poseChanged || cooldownPassed) {
 
-      char buf[24];
+      char buf[32];
 
       snprintf(
           buf,
@@ -288,9 +342,11 @@ void loop() {
           pose
       );
 
+
       pCharacteristic->setValue(buf);
 
       pCharacteristic->notify();
+
 
       lastPose = pose;
 

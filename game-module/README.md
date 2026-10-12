@@ -33,15 +33,31 @@ The game screen expects this normalized input:
 ```ts
 handleInput("RIGHT", "FIST");
 handleInput("LEFT", "PALM");
+handleInput("LEFT", "SCISSORS");
+handleInput("RIGHT", "SCISSORS");
 ```
 
 BLE messages can be parsed from either format:
 
 ```text
-RIGHT,FIST
 LEFT,PALM
+LEFT,SCISSORS
+LEFT,FIST
+RIGHT,PALM
+RIGHT,SCISSORS
+RIGHT,FIST
 ```
 
 ```json
 {"side":"RIGHT","gesture":"FIST"}
 ```
+
+Supported gestures are `PALM`, `SCISSORS`, and `FIST`, defined in
+`src/gloveInput.ts`. The ESP32 determines the pose; the app does not classify
+raw sensor values. Gesture-only notifications also use the connected glove's side.
+
+The game compares the received gesture with the note using the existing matching
+rule. SCISSORS is accepted for both hands and displayed in the BLE status text;
+the temporary input buttons also support it. Each hand independently generates
+SCISSORS notes with a 25% probability, PALM with 37.5%, and FIST with 37.5%.
+Matching a SCISSORS note uses the same timing and scoring rules as PALM/FIST.
