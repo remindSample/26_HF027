@@ -20,6 +20,7 @@ type MemoryItem = {
   displayDate: string;
   question: string;
   answerPreview?: string;
+  answerText: string;
   characterCount: number;
   isFavorite: boolean;
   isLiked: boolean;
@@ -49,8 +50,9 @@ function toMemoryItem(answer: AnswerResponse): MemoryItem {
   return {
     id: answer.id,
     displayDate: formatDisplayDate(answer.answered_at),
-    question: "작성한 답변",
+    question: answer.question_content || "작성한 답변",
     answerPreview: answerText,
+    answerText,
     characterCount: answerText.length,
     isFavorite: false,
     isLiked: false,
@@ -111,10 +113,14 @@ function MemoryTabs() {
 
 function MemoryCard({
   item,
+  isOpen,
   onToggleFavorite,
+  onToggleDetail,
 }: {
   item: MemoryItem;
+  isOpen: boolean;
   onToggleFavorite: (id: number) => void;
+  onToggleDetail: (id: number) => void;
 }) {
   return (
     <View className="overflow-hidden rounded-[10px] bg-[#FFFBF7] border-2 border-black">
@@ -142,12 +148,23 @@ function MemoryCard({
         </Text>
 
         <View className="mt-3 min-h-[94px] justify-between bg-white px-4 py-4 border border-[#F9EBDF]">
-          <Text className="text-[19px] font-medium text-[#8A8A8A]">
-            {item.answerPreview ?? "답변..."}
-          </Text>
-          <Pressable className="self-end">
+          {isOpen ? (
+            <View>
+              <Text className="text-[15px] font-medium text-[#777777]">
+                답변
+              </Text>
+              <Text className="mt-2 text-[19px] font-medium leading-[28px] text-black">
+                {item.answerText}
+              </Text>
+            </View>
+          ) : (
+            <Text className="text-[19px] font-medium text-[#8A8A8A]">
+              {item.answerPreview ?? "답변..."}
+            </Text>
+          )}
+          <Pressable className="self-end" onPress={() => onToggleDetail(item.id)}>
             <Text className="text-[17px] font-medium text-black">
-              자세히 보기
+              {isOpen ? "접기" : "자세히 보기"}
             </Text>
           </Pressable>
         </View>
@@ -175,6 +192,7 @@ export default function GuardianMemoryListScreen() {
   const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
   const [activeFilter, setActiveFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -292,7 +310,11 @@ export default function GuardianMemoryListScreen() {
               <MemoryCard
                 key={item.id}
                 item={item}
+                isOpen={selectedMemoryId === item.id}
                 onToggleFavorite={toggleFavorite}
+                onToggleDetail={(id) =>
+                  setSelectedMemoryId((current) => (current === id ? null : id))
+                }
               />
             ))
           ) : (

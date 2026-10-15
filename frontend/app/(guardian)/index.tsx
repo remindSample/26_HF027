@@ -4,6 +4,7 @@ import {
   getAuthSession,
   getGuardianLinksByGuardian,
   getGuardianRecentAnswers,
+  getMonthlyAnswerReport,
   getUser,
   type RecentAnswerResponse,
 } from "@/apis";
@@ -39,6 +40,8 @@ const quickMenus = [
     color: "#FFD800",
   },
 ] as const;
+
+const TODAY_ANSWER_GOAL = 2;
 
 function QuickMenuTile({
   label,
@@ -76,11 +79,51 @@ function formatAnswerTime(value: string) {
   return `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
+function getDaysSince(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const answerStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  return Math.max(
+    0,
+    Math.floor((todayStart.getTime() - answerStart.getTime()) / 86400000),
+  );
+}
+
+function getDateKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 export default function GuardianHomeScreen() {
   const [guardianName, setGuardianName] = useState("보호자");
   const [elderName, setElderName] = useState<string | null>(null);
   const [recentAnswers, setRecentAnswers] = useState<RecentAnswerResponse[]>([]);
+  const [todayAnswerCount, setTodayAnswerCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const latestAnswer = recentAnswers[0];
+  const displayedTodayAnswerCount = Math.min(todayAnswerCount, TODAY_ANSWER_GOAL);
+  const todayAnswerProgress = `${(displayedTodayAnswerCount / TODAY_ANSWER_GOAL) * 100}%`;
+  const daysSinceLatestAnswer = latestAnswer
+    ? getDaysSince(latestAnswer.answered_at)
+    : null;
+  const notificationTitle = !elderName
+    ? "연결된 사용자가 없습니다"
+    : latestAnswer && daysSinceLatestAnswer === 0
+      ? `${elderName}님이 오늘 답변했어요`
+      : latestAnswer && daysSinceLatestAnswer !== null
+        ? `${elderName}님이 ${daysSinceLatestAnswer}일째 답변하지 않았어요`
+        : `${elderName}님의 최근 답변이 없습니다`;
+  const notificationDescription = !elderName
+    ? "사용자와 연결하면 답변 공백 알림을 확인할 수 있어요."
+    : latestAnswer
+      ? `최근 답변일: ${formatAnswerTime(latestAnswer.answered_at)}`
+      : "새 질문을 추가하거나 답변을 기다려주세요.";
 
   useEffect(() => {
     let isMounted = true;
@@ -97,22 +140,44 @@ export default function GuardianHomeScreen() {
 
         const links = await getGuardianLinksByGuardian(guardianId);
         const acceptedLink = links.find((link) => link.status === "accepted");
-        const [elder, answers] = acceptedLink
-          ? await Promise.all([
-              getUser(acceptedLink.elder_id),
-              getGuardianRecentAnswers(acceptedLink.elder_id, 3),
-            ])
-          : [null, []];
+        let elderNameValue: string | null = null;
+        let answers: RecentAnswerResponse[] = [];
+        let todayCount = 0;
+
+        if (acceptedLink) {
+          const now = new Date();
+          const [elder, recentAnswerResult, report] = await Promise.all([
+            getUser(acceptedLink.elder_id),
+            getGuardianRecentAnswers(acceptedLink.elder_id, 3),
+            getMonthlyAnswerReport(
+              now.getFullYear(),
+              now.getMonth() + 1,
+              acceptedLink.elder_id,
+            ),
+          ]);
+          const todayKey = getDateKey(now);
+
+          elderNameValue = elder.name;
+          answers = recentAnswerResult;
+          todayCount = report.answers.filter((answer) => {
+            const answeredAt = new Date(answer.answered_at);
+
+            return !Number.isNaN(answeredAt.getTime())
+              && getDateKey(answeredAt) === todayKey;
+          }).length;
+        }
 
         if (isMounted) {
           setGuardianName(session.user.name);
-          setElderName(elder?.name ?? null);
+          setElderName(elderNameValue);
           setRecentAnswers(answers);
+          setTodayAnswerCount(todayCount);
         }
       } catch {
         if (isMounted) {
           setElderName(null);
           setRecentAnswers([]);
+          setTodayAnswerCount(0);
         }
       } finally {
         if (isMounted) {
@@ -199,6 +264,24 @@ export default function GuardianHomeScreen() {
           </Pressable>
         </Link>
 
+        <View className="mt-5 flex-row items-center rounded-[14px] border-2 border-black bg-[#F9F7F4] px-5 py-4">
+          <View className="h-[52px] w-[52px] items-center justify-center rounded-[12px] bg-[#FAEDE0]">
+            <MaterialCommunityIcons
+              name="bell-ring-outline"
+              size={32}
+              color="#174C33"
+            />
+          </View>
+          <View className="ml-4 flex-1">
+            <Text className="text-[20px] font-bold text-[#174C33]">
+              {notificationTitle}
+            </Text>
+            <Text className="mt-1 text-[16px] font-medium text-[#5F5F5F]">
+              {notificationDescription}
+            </Text>
+          </View>
+        </View>
+
         <View className="mt-[52px] flex-row gap-5">
           <View className="relative flex-1 rounded-[14px] border-2 border-black bg-[#F9F7F4] px-4 pb-4 pt-[29px]">
             <View className="absolute top-[-18px] self-center rounded-[10px] bg-[#BFCBC7] px-3 py-1">
@@ -220,9 +303,14 @@ export default function GuardianHomeScreen() {
                 오늘의 답변
               </Text>
             </View>
-            <Text className="text-[20px] font-medium text-black">1/2개</Text>
+            <Text className="text-[20px] font-medium text-black">
+              {displayedTodayAnswerCount}/{TODAY_ANSWER_GOAL}개
+            </Text>
             <View className="mt-3 h-[17px] overflow-hidden rounded-full bg-[#FAEDE0]">
-              <View className="h-full w-1/2 rounded-l-full bg-[#BFCBC7]" />
+              <View
+                className="h-full rounded-full bg-[#BFCBC7]"
+                style={{ width: todayAnswerProgress }}
+              />
             </View>
           </View>
         </View>

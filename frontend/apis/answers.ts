@@ -28,6 +28,7 @@ export type AnswerResponse = {
   positive_score: number | null;
   negative_score: number | null;
   answered_at: string;
+  question_content?: string | null;
 };
 
 export type RecentAnswerResponse = AnswerResponse & {

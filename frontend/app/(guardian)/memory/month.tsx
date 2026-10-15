@@ -20,6 +20,7 @@ type MemoryItem = {
   isoDate: string;
   displayDate: string;
   question: string;
+  answerText: string;
 };
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
@@ -58,7 +59,8 @@ function toMemoryItem(answer: AnswerResponse): MemoryItem {
     displayDate: `${answeredAt.getFullYear()}년 ${String(
       answeredAt.getMonth() + 1,
     ).padStart(2, "0")}월 ${String(answeredAt.getDate()).padStart(2, "0")}일`,
-    question: answerText,
+    question: answer.question_content || "작성한 답변",
+    answerText,
   };
 }
 
@@ -114,7 +116,15 @@ function MemoryTabs() {
   );
 }
 
-function MonthMemoryList({ items }: { items: MemoryItem[] }) {
+function MonthMemoryList({
+  items,
+  selectedMemoryId,
+  onSelectMemory,
+}: {
+  items: MemoryItem[];
+  selectedMemoryId: number | null;
+  onSelectMemory: (id: number) => void;
+}) {
   return (
     <View className="border-t border-white px-5 pb-5 pt-6">
       <Text className="text-[21px] font-medium text-black">이 달의 기억들</Text>
@@ -125,13 +135,28 @@ function MonthMemoryList({ items }: { items: MemoryItem[] }) {
             <Pressable
               key={item.id}
               className="rounded-[14px] bg-[#E7E7E7] px-4 py-4"
+              onPress={() => onSelectMemory(item.id)}
             >
               <Text className="text-[16px] font-medium text-[#777777]">
                 {item.displayDate}
               </Text>
-              <Text className="mt-5 text-[20px] font-medium leading-[29px] text-black">
+              <Text className="mt-4 text-[18px] font-medium leading-[27px] text-black">
                 {item.question}
               </Text>
+              {selectedMemoryId === item.id ? (
+                <View className="mt-4 rounded-[10px] bg-white px-4 py-4">
+                  <Text className="text-[15px] font-medium text-[#777777]">
+                    답변
+                  </Text>
+                  <Text className="mt-2 text-[18px] font-medium leading-[28px] text-black">
+                    {item.answerText}
+                  </Text>
+                </View>
+              ) : (
+                <Text className="mt-3 text-right text-[16px] font-medium text-[#555555]">
+                  자세히 보기
+                </Text>
+              )}
             </Pressable>
           ))
         ) : (
@@ -153,6 +178,7 @@ export default function GuardianMemoryMonthScreen() {
   const [pickerType, setPickerType] = useState<"year" | "month" | null>(null);
   const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -218,6 +244,7 @@ export default function GuardianMemoryMonthScreen() {
     const nextDate = new Date(selectedYear, selectedMonth - 1 + amount, 1);
     setSelectedYear(nextDate.getFullYear());
     setSelectedMonth(nextDate.getMonth() + 1);
+    setSelectedMemoryId(null);
     setPickerType(null);
   };
 
@@ -400,7 +427,13 @@ export default function GuardianMemoryMonthScreen() {
               <ActivityIndicator color="#174C33" />
             </View>
           ) : (
-            <MonthMemoryList items={monthItems} />
+            <MonthMemoryList
+              items={monthItems}
+              selectedMemoryId={selectedMemoryId}
+              onSelectMemory={(id) =>
+                setSelectedMemoryId((current) => (current === id ? null : id))
+              }
+            />
           )}
         </View>
       </ScrollView>

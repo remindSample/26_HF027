@@ -10,6 +10,9 @@ export default function ReportMainScreen() {
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   const [answerCount, setAnswerCount] = useState(0);
+  const [reportSummary, setReportSummary] = useState(
+    "이번 달 답변 기록이 리포트에 반영됐어요!",
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -21,6 +24,7 @@ export default function ReportMainScreen() {
           if (!link) {
             if (isMounted) {
               setAnswerCount(0);
+              setReportSummary("연결된 사용자의 리포트 요약을 확인할 수 없습니다.");
             }
             return;
           }
@@ -32,10 +36,12 @@ export default function ReportMainScreen() {
           );
           if (isMounted) {
             setAnswerCount(report.answer_count);
+            setReportSummary(report.ai_comment);
           }
         } catch {
           if (isMounted) {
             setAnswerCount(0);
+            setReportSummary("리포트 요약을 불러오지 못했어요. 잠시 후 다시 확인해주세요.");
           }
         }
       }
@@ -85,7 +91,7 @@ export default function ReportMainScreen() {
           <View className="flex-row bg-[#FFFDFB] px-4 py-10 items-center gap-6">
             <View className="w-[104px] h-[86px] bg-[#D9D9D9] rounded-lg" />
             <Text className="flex-1 text-[22px] text-[#111111] leading-[34px]">
-              이번 달 답변 기록이{"\n"}리포트에 반영됐어요!
+              {reportSummary}
             </Text>
           </View>
         </View>
