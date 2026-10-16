@@ -15,7 +15,10 @@ from app.schemas.answer import (
     RecentAnswerResponse,
 )
 from app.crud.answer_crud import create_answer, get_answers_by_month, get_recent_answers
+from app.crud.guardian_link_crud import has_accepted_link
+from app.models.question import Question
 from app.crud.question_crud import get as get_question
+from app.routers.auth import get_current_user
 
 router = APIRouter(prefix="/answers", tags=["answers"])
 
@@ -47,7 +50,30 @@ def get_recent_answer_list(
     rows = get_recent_answers(db, user_id, limited_count)
     return [
         RecentAnswerResponse(
-            **AnswerResponse.model_validate(answer).model_dump(),
+            **AnswerResponse.model_validate(answer).model_dump(exclude={"question_content"}),
+            question_content=question_content,
+        )
+        for answer, question_content in rows
+    ]
+
+
+@router.get("/guardian/{elder_id}/recent", response_model=list[RecentAnswerResponse])
+def get_guardian_recent_answer_list(
+    elder_id: int,
+    limit: int = 5,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    if current_user.role != "GUARDIAN":
+        raise HTTPException(status_code=403, detail="보호자 계정만 사용할 수 있습니다.")
+    if not has_accepted_link(db, current_user.id, elder_id):
+        raise HTTPException(status_code=403, detail="연결된 사용자 답변만 조회할 수 있습니다.")
+
+    limited_count = min(max(limit, 1), 5)
+    rows = get_recent_answers(db, elder_id, limited_count)
+    return [
+        RecentAnswerResponse(
+            **AnswerResponse.model_validate(answer).model_dump(exclude={"question_content"}),
             question_content=question_content,
         )
         for answer, question_content in rows
@@ -139,6 +165,11 @@ def get_monthly_report(
         )
 
     n = len(answers)
+    question_contents = dict(
+        db.query(Question.id, Question.content)
+        .filter(Question.id.in_([answer.question_id for answer in answers]))
+        .all()
+    )
     avg_wc = round(sum(a.word_count or 0 for a in answers) / n, 1)
     avg_sc = round(sum(a.sentence_count or 0 for a in answers) / n, 1)
     avg_cx = round(sum(a.avg_sentence_length or 0 for a in answers) / n, 1)
@@ -172,18 +203,23 @@ def get_monthly_report(
         positive_score_diff_pct = _pct_diff(avg_pos, lm_avg_pos)
         complexity_diff_pct = _pct_diff(avg_cx, lm_avg_cx)
 
-        comment_parts = []
-        if word_count_diff_pct is not None and word_count_diff_pct > 0:
-            comment_parts.append(f"지난달보다 답변에 사용한 단어 수가 {abs(word_count_diff_pct)}% 늘었어요.")
+        if (
+            word_count_diff_pct is not None
+            and unique_word_ratio_diff_pct is not None
+            and word_count_diff_pct > 0
+            and unique_word_ratio_diff_pct > 0
+        ):
+            ai_comment = "이번 달은 지난달보다 답변량과 어휘 다양성이 함께 늘었어요."
+        elif word_count_diff_pct is not None and word_count_diff_pct > 0:
+            ai_comment = f"이번 달은 지난달보다 답변에 사용한 단어 수가 {abs(word_count_diff_pct)}% 늘었어요."
+        elif unique_word_ratio_diff_pct is not None and unique_word_ratio_diff_pct > 0:
+            ai_comment = f"이번 달은 지난달보다 어휘 다양성이 {abs(unique_word_ratio_diff_pct)}% 늘었어요."
         elif word_count_diff_pct is not None and word_count_diff_pct < 0:
-            comment_parts.append(f"지난달보다 단어 수가 {abs(word_count_diff_pct)}% 줄었어요.")
-
-        if unique_word_ratio_diff_pct is not None and unique_word_ratio_diff_pct > 0:
-            comment_parts.append(f"어휘 다양성이 {abs(unique_word_ratio_diff_pct)}% 늘었어요.")
+            ai_comment = f"이번 달은 지난달보다 단어 수가 {abs(word_count_diff_pct)}% 줄었어요."
         elif unique_word_ratio_diff_pct is not None and unique_word_ratio_diff_pct < 0:
-            comment_parts.append(f"어휘 다양성이 {abs(unique_word_ratio_diff_pct)}% 줄었어요.")
-
-        ai_comment = " ".join(comment_parts) if comment_parts else "꾸준히 답변해주고 계세요!"
+            ai_comment = f"이번 달은 지난달보다 어휘 다양성이 {abs(unique_word_ratio_diff_pct)}% 줄었어요."
+        else:
+            ai_comment = "이번 달도 꾸준히 답변해주고 계세요!"
     else:
         ai_comment = "아직 비교할 지난달 기록이 없습니다."
 
@@ -191,7 +227,12 @@ def get_monthly_report(
         year=year,
         month=month,
         answer_count=n,
-        answers=[AnswerResponse.model_validate(a) for a in answers],
+        answers=[
+            AnswerResponse.model_validate(a).model_copy(
+                update={"question_content": question_contents.get(a.question_id)}
+            )
+            for a in answers
+        ],
         avg_word_count=avg_wc,
         avg_sentence_count=avg_sc,
         avg_complexity_score=avg_cx,

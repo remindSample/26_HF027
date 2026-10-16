@@ -24,7 +24,7 @@ export default function ContactStep({
   const inputPlaceholder = step === "EMAIL" ? "이메일 입력" : "전화번호 입력";
 
   return (
-    <View className="flex-1 bg-white px-[30px]">
+    <View className="flex-1 bg-[#FDF2EC] px-[30px]">
       <Text className="mt-[60px] text-center text-[30px] text-black">
         {methodTitle}
       </Text>

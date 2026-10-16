@@ -11,6 +11,7 @@ node_modules/
 .expo/
 
 # 기타
+.claude/
 .vscode/
 .DS_Store
 backend/remind_db_v10.sql

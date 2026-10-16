@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image as ExpoImage } from "expo-image";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
 import { getAuthSession, getRecentAnswers } from "@/apis";
 import Ic_Game3 from "../../assets/Icon/Ic_Game3.png";
 import IcSettings from "../../assets/Icon/Ic_Settings2.png";
+import LogoReMind from "../../assets/Icon/Logo_ReMind.png";
 
 const ONBOARDING_STORAGE_KEY_PREFIX = "remind_user_onboarding_seen";
 type RecentMemory = {
   id: number;
   date: string;
   question: string;
+  answerPreview: string;
 };
 
 const ONBOARDING_STEPS = [
@@ -121,7 +123,7 @@ export default function HomeScreen() {
       try {
         setIsRecentMemoriesLoading(true);
         setRecentMemoriesError(null);
-        const answers = await getRecentAnswers(5);
+        const answers = await getRecentAnswers(3);
 
         if (!isMounted) {
           return;
@@ -132,6 +134,8 @@ export default function HomeScreen() {
             id: answer.id,
             date: formatMemoryDate(answer.answered_at),
             question: answer.question_content,
+            answerPreview:
+              answer.content_text || answer.ocr_text || "텍스트 답변 없음",
           })),
         );
       } catch (error) {
@@ -143,7 +147,9 @@ export default function HomeScreen() {
           error instanceof Error ? error.message : "최근 기억을 불러오지 못했습니다.";
 
         setRecentMemoriesError(
-          message.toLowerCase().includes("not found") ? "최근 기억 없음" : message,
+          message.toLowerCase().includes("not found")
+            ? "최근 기억 없음"
+            : "최근 기억을 불러오지 못했어요. 잠시 후 다시 확인해주세요.",
         );
       } finally {
         if (isMounted) {
@@ -179,8 +185,15 @@ export default function HomeScreen() {
   return (
     <View className="flex-1 bg-[#FDF2EC]">
       <View className="relative h-[104px] flex-row items-center justify-center px-[28px] pt-4">
-        <Text className="text-[44px] font-bold text-black">Re:Mind</Text>
-        <Pressable className="absolute right-[28px] top-[34px] h-[48px] w-[48px] items-center justify-center">
+        <ExpoImage
+          source={LogoReMind}
+          contentFit="contain"
+          style={{ width: 150, height: 50 }}
+        />
+        <Pressable
+          onPress={() => router.push("/(user)/settings")}
+          className="absolute right-[28px] top-[34px] h-[48px] w-[48px] items-center justify-center"
+        >
           <ExpoImage
             source={IcSettings}
             contentFit="contain"
@@ -336,6 +349,9 @@ export default function HomeScreen() {
                   </Text>
                   <Text className="mt-2 text-[16px] font-regular leading-[28px] text-black">
                     {memory.question}
+                  </Text>
+                  <Text className="mt-2 text-[15px] font-regular leading-[26px] text-[#6B6255]">
+                    {memory.answerPreview}
                   </Text>
                 </View>
               ))

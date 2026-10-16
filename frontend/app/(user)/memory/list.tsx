@@ -1,13 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
-import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+
+import { getMonthlyAnswerReport, type AnswerResponse } from "@/apis";
 
 type MemoryItem = {
   id: number;
   displayDate: string;
   question: string;
   answerPreview?: string;
+  answerText: string;
   characterCount: number;
   isFavorite: boolean;
   isLiked: boolean;
@@ -20,26 +23,31 @@ const filterChips = [
   { key: "positive", label: "긍정적" },
 ] as const;
 
-const initialMemoryItems: MemoryItem[] = [
-  {
-    id: 1,
-    displayDate: "2026년 04월 01일",
-    question: "가장 행복했던 여행지는 어디인가요?",
-    answerPreview: "답변...",
-    characterCount: 287,
-    isFavorite: true,
-    isLiked: true,
-  },
-  {
-    id: 2,
-    displayDate: "2026년 04월 03일",
-    question: "첫 직장에서의 기억을 떠올려보세요.",
-    answerPreview: "답변...",
-    characterCount: 287,
+function formatDisplayDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(
+    date.getDate(),
+  ).padStart(2, "0")}일`;
+}
+
+function toMemoryItem(answer: AnswerResponse): MemoryItem {
+  const answerText = answer.content_text || answer.ocr_text || "텍스트 답변 없음";
+
+  return {
+    id: answer.id,
+    displayDate: formatDisplayDate(answer.answered_at),
+    question: answer.question_content || "작성한 답변",
+    answerPreview: answerText,
+    answerText,
+    characterCount: answerText.length,
     isFavorite: false,
-    isLiked: true,
-  },
-];
+    isLiked: false,
+  };
+}
 
 function MemoryTabs() {
   return (
@@ -89,10 +97,14 @@ function MemoryTabs() {
 
 function MemoryCard({
   item,
+  isOpen,
   onToggleFavorite,
+  onToggleDetail,
 }: {
   item: MemoryItem;
+  isOpen: boolean;
   onToggleFavorite: (id: number) => void;
+  onToggleDetail: (id: number) => void;
 }) {
   return (
     <View className="overflow-hidden rounded-[10px] bg-[#FFFBF7] border-2 broder-black">
@@ -120,12 +132,23 @@ function MemoryCard({
         </Text>
 
         <View className="mt-3 min-h-[94px] justify-between bg-white px-4 py-4 border-1 border-[#F9EBDF]">
-          <Text className="text-[19px] font-medium text-[#8A8A8A]">
-            {item.answerPreview ?? "답변..."}
-          </Text>
-          <Pressable className="self-end">
+          {isOpen ? (
+            <View>
+              <Text className="text-[15px] font-medium text-[#777777]">
+                답변
+              </Text>
+              <Text className="mt-2 text-[19px] font-medium leading-[28px] text-black">
+                {item.answerText}
+              </Text>
+            </View>
+          ) : (
+            <Text className="text-[19px] font-medium text-[#8A8A8A]">
+              {item.answerPreview ?? "답변..."}
+            </Text>
+          )}
+          <Pressable className="self-end" onPress={() => onToggleDetail(item.id)}>
             <Text className="text-[17px] font-medium text-black">
-              자세히 보기
+              {isOpen ? "접기" : "자세히 보기"}
             </Text>
           </Pressable>
         </View>
@@ -150,8 +173,44 @@ function MemoryCard({
 }
 
 export default function GuardianMemoryListScreen() {
-  const [memoryItems, setMemoryItems] = useState(initialMemoryItems);
+  const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadMemories() {
+        setIsLoading(true);
+        try {
+          const now = new Date();
+          const report = await getMonthlyAnswerReport(
+            now.getFullYear(),
+            now.getMonth() + 1,
+          );
+          if (isMounted) {
+            setMemoryItems(report.answers.map(toMemoryItem));
+          }
+        } catch {
+          if (isMounted) {
+            setMemoryItems([]);
+          }
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        }
+      }
+
+      loadMemories();
+
+      return () => {
+        isMounted = false;
+      };
+    }, []),
+  );
 
   const toggleFavorite = (id: number) => {
     setMemoryItems((items) =>
@@ -219,12 +278,20 @@ export default function GuardianMemoryListScreen() {
         </ScrollView>
 
         <View className="mt-8 gap-7">
-          {memoryItems.length > 0 ? (
+          {isLoading ? (
+            <View className="items-center py-4">
+              <ActivityIndicator color="#174C33" />
+            </View>
+          ) : memoryItems.length > 0 ? (
             memoryItems.map((item) => (
               <MemoryCard
                 key={item.id}
                 item={item}
+                isOpen={selectedMemoryId === item.id}
                 onToggleFavorite={toggleFavorite}
+                onToggleDetail={(id) =>
+                  setSelectedMemoryId((current) => (current === id ? null : id))
+                }
               />
             ))
           ) : (

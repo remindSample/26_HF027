@@ -10,7 +10,7 @@ import {
 import Header from "@/components/Header";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 
 const CALENDAR_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -160,8 +160,23 @@ export default function ActivityReportScreen() {
       ? "어르신 정보를 불러오는 중입니다..."
       : "연결된 어르신이 없습니다";
 
+  const handlePressDay = (day: number) => {
+    const dayAnswers = answersByDay[day] ?? [];
+
+    if (dayAnswers.length === 0) {
+      return;
+    }
+
+    Alert.alert(
+      `${currentMonth}월 ${day}일 답변`,
+      dayAnswers
+        .map((answer) => answer.content_text || answer.ocr_text || "텍스트 답변 없음")
+        .join("\n\n")
+    );
+  };
+
   return (
-    <View className="flex-1 bg-[#F0F8FF]">
+    <View className="flex-1 bg-[#FDF2EC]">
       <Header title="활동 리포트" />
 
       <ScrollView
@@ -248,25 +263,27 @@ export default function ActivityReportScreen() {
               const day = i + 1;
               const done = Boolean(answersByDay[day]?.length);
               return (
-                <View key={day} className="w-[14.28%] items-center mb-1.5 h-9">
+                <Pressable
+                  key={day}
+                  className="w-[14.28%] items-center mb-1.5 h-9"
+                  onPress={() => handlePressDay(day)}
+                >
+                  {done && (
+                    <View className="absolute right-[18px] top-0 h-1.5 w-1.5 rounded-full bg-[#FF4B4B]" />
+                  )}
                   <Text
                     className={`text-[13px] ${done ? "font-bold text-[#222222]" : "text-[#555555]"}`}
                   >
                     {day}
                   </Text>
-                  {done && (
-                    <Text className="text-[8px] text-[#5BA4A4] mt-0.5">●</Text>
-                  )}
-                </View>
+                </Pressable>
               );
             })}
           </View>
 
           <View className="flex-row items-center gap-1.5 mt-2">
-            <Text className="text-xs text-[#5BA4A4]">●</Text>
-            <Text className="text-xs text-[#777777] mr-3">활동 완료</Text>
-            <Text className="text-xs text-[#CCCCCC]">●</Text>
-            <Text className="text-xs text-[#777777]">미완료</Text>
+            <Text className="text-xs text-[#FF4B4B]">●</Text>
+            <Text className="text-xs text-[#777777]">답변 완료</Text>
           </View>
         </View>
 
@@ -275,9 +292,9 @@ export default function ActivityReportScreen() {
             className="flex-1 bg-white rounded-[14px] p-4 items-center gap-1.5"
             style={{ elevation: 1 }}
           >
-            <Text className="text-[13px] text-[#777777]">단어 점수</Text>
+            <Text className="text-[13px] text-[#777777]">평균 단어 수</Text>
             <Text className="text-[26px] font-extrabold text-[#222222]">
-              {avgWordCount.toFixed(1)} 개
+              {avgWordCount.toFixed(1)}개
             </Text>
             <Text className={`text-[13px] font-semibold ${diffColorClass(wordCountDiffPct)}`}>
               {formatDiffPct(wordCountDiffPct)}

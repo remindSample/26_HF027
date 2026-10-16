@@ -27,7 +27,7 @@ export default function PasswordStep({
   isSubmitting,
 }: Props) {
   return (
-    <View className="flex-1 bg-white px-[30px]">
+    <View className="flex-1 bg-[#FDF2EC] px-[30px]">
       <Text className="mt-[60px] text-center text-[30px] text-black">
         사용할 비밀번호 입력
       </Text>

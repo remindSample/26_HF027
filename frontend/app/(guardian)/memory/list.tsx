@@ -1,13 +1,26 @@
+import {
+  getCurrentGuardianAcceptedLink,
+  getMonthlyAnswerReport,
+  type AnswerResponse,
+} from "@/apis";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
-import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 type MemoryItem = {
   id: number;
   displayDate: string;
   question: string;
   answerPreview?: string;
+  answerText: string;
   characterCount: number;
   isFavorite: boolean;
   isLiked: boolean;
@@ -20,44 +33,76 @@ const filterChips = [
   { key: "positive", label: "긍정적" },
 ] as const;
 
-const initialMemoryItems: MemoryItem[] = [
-  {
-    id: 1,
-    displayDate: "2026년 04월 01일",
-    question: "가장 행복했던 여행지는 어디인가요?",
-    answerPreview: "답변...",
-    characterCount: 287,
-    isFavorite: true,
-    isLiked: true,
-  },
-  {
-    id: 2,
-    displayDate: "2026년 04월 03일",
-    question: "첫 직장에서의 기억을 떠올려보세요.",
-    answerPreview: "답변...",
-    characterCount: 287,
+function formatDisplayDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(
+    date.getDate(),
+  ).padStart(2, "0")}일`;
+}
+
+function toMemoryItem(answer: AnswerResponse): MemoryItem {
+  const answerText = answer.content_text || answer.ocr_text || "텍스트 답변 없음";
+
+  return {
+    id: answer.id,
+    displayDate: formatDisplayDate(answer.answered_at),
+    question: answer.question_content || "작성한 답변",
+    answerPreview: answerText,
+    answerText,
+    characterCount: answerText.length,
     isFavorite: false,
-    isLiked: true,
-  },
-];
+    isLiked: false,
+  };
+}
 
 function MemoryTabs() {
   return (
     <View className="mt-8 flex-row justify-between gap-4">
-      <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#7B7B7B]">
-        <Ionicons name="list" size={25} color="#FFFFFF" />
-        <Text className="ml-2 text-[20px] font-medium text-white">목록</Text>
+      <Pressable
+        className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9EBDF]"
+        style={{
+          elevation: 0.5,
+          shadowColor: "#000000",
+          shadowOffset: { width: 1, height: 1 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+        }}
+      >
+        <Ionicons name="list" size={25} color="#1F1F1F" />
+        <Text className="ml-2 text-[20px] font-medium text-black">목록</Text>
       </Pressable>
 
       <Link href="/(guardian)/memory/month" asChild>
-        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#BFBFBF]">
+        <Pressable
+          className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9F7F4]"
+          style={{
+            elevation: 0.5,
+            shadowColor: "#000000",
+            shadowOffset: { width: 1, height: 1 },
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+          }}
+        >
           <Ionicons name="calendar-outline" size={25} color="#1F1F1F" />
           <Text className="ml-2 text-[20px] font-medium text-black">달력</Text>
         </Pressable>
       </Link>
 
       <Link href="/(guardian)/memory/week" asChild>
-        <Pressable className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#BFBFBF]">
+        <Pressable
+          className="h-[50px] flex-1 flex-row items-center justify-center rounded-[16px] bg-[#F9F7F4]"
+          style={{
+            elevation: 0.5,
+            shadowColor: "#000000",
+            shadowOffset: { width: 1, height: 1 },
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+          }}
+        >
           <Ionicons name="calendar-clear-outline" size={25} color="#1F1F1F" />
           <Text className="ml-2 text-[20px] font-medium text-black">주간</Text>
         </Pressable>
@@ -68,14 +113,18 @@ function MemoryTabs() {
 
 function MemoryCard({
   item,
+  isOpen,
   onToggleFavorite,
+  onToggleDetail,
 }: {
   item: MemoryItem;
+  isOpen: boolean;
   onToggleFavorite: (id: number) => void;
+  onToggleDetail: (id: number) => void;
 }) {
   return (
-    <View className="overflow-hidden rounded-[10px] bg-[#EEEEEE]">
-      <View className="min-h-[52px] flex-row items-center justify-between bg-[#CFCFCF] px-6 py-3">
+    <View className="overflow-hidden rounded-[10px] bg-[#FFFBF7] border-2 border-black">
+      <View className="min-h-[52px] flex-row items-center justify-between bg-[#F9EBDF] px-6 py-3">
         <Text className="flex-1 text-center text-[21px] font-medium text-black">
           {item.displayDate}
         </Text>
@@ -98,13 +147,24 @@ function MemoryCard({
           {item.question}
         </Text>
 
-        <View className="mt-3 min-h-[94px] justify-between bg-[#D8D8D8] px-4 py-4">
-          <Text className="text-[19px] font-medium text-[#8A8A8A]">
-            {item.answerPreview ?? "답변..."}
-          </Text>
-          <Pressable className="self-end">
+        <View className="mt-3 min-h-[94px] justify-between bg-white px-4 py-4 border border-[#F9EBDF]">
+          {isOpen ? (
+            <View>
+              <Text className="text-[15px] font-medium text-[#777777]">
+                답변
+              </Text>
+              <Text className="mt-2 text-[19px] font-medium leading-[28px] text-black">
+                {item.answerText}
+              </Text>
+            </View>
+          ) : (
+            <Text className="text-[19px] font-medium text-[#8A8A8A]">
+              {item.answerPreview ?? "답변..."}
+            </Text>
+          )}
+          <Pressable className="self-end" onPress={() => onToggleDetail(item.id)}>
             <Text className="text-[17px] font-medium text-black">
-              자세히 보기
+              {isOpen ? "접기" : "자세히 보기"}
             </Text>
           </Pressable>
         </View>
@@ -129,8 +189,53 @@ function MemoryCard({
 }
 
 export default function GuardianMemoryListScreen() {
-  const [memoryItems, setMemoryItems] = useState(initialMemoryItems);
+  const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadMemories() {
+        setIsLoading(true);
+        try {
+          const link = await getCurrentGuardianAcceptedLink();
+          if (!link) {
+            if (isMounted) {
+              setMemoryItems([]);
+            }
+            return;
+          }
+
+          const now = new Date();
+          const report = await getMonthlyAnswerReport(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            link.elder_id,
+          );
+          if (isMounted) {
+            setMemoryItems(report.answers.map(toMemoryItem));
+          }
+        } catch {
+          if (isMounted) {
+            setMemoryItems([]);
+          }
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        }
+      }
+
+      loadMemories();
+
+      return () => {
+        isMounted = false;
+      };
+    }, []),
+  );
 
   const toggleFavorite = (id: number) => {
     setMemoryItems((items) =>
@@ -141,13 +246,13 @@ export default function GuardianMemoryListScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-[#FDF2EC]">
       <ScrollView
         className="flex-1"
         contentContainerClassName="px-5 pb-6 pt-[30px]"
         showsVerticalScrollIndicator={false}
       >
-        <View className="h-[56px] flex-row items-center bg-[#D9D9D9] px-3">
+        <View className="h-[56px] flex-row items-center bg-white px-3">
           <Ionicons name="search-outline" size={38} color="#858585" />
           <TextInput
             accessibilityLabel="기억 검색"
@@ -171,19 +276,22 @@ export default function GuardianMemoryListScreen() {
             return (
               <Pressable
                 key={chip.key}
-                className={`h-[46px] min-w-[56px] flex-row items-center justify-center rounded-[23px] px-7 ${
-                  isActive ? "bg-[#858585]" : "bg-[#D9D9D9]"
+                className={`my-1 h-[46px] min-w-[56px] flex-row items-center justify-center rounded-[23px] px-7 ${
+                  isActive ? "bg-[#F9EBDF]" : "bg-[#F9F7F4]"
                 }`}
+                style={{
+                  elevation: 0.5,
+                  shadowColor: "#000000",
+                  shadowOffset: { width: 0.5, height: 0.5 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 6,
+                }}
                 onPress={() => setActiveFilter(chip.key)}
               >
                 {"icon" in chip ? (
-                  <Ionicons name={chip.icon} size={30} color="#4D4D4D" />
+                  <Ionicons name={chip.icon} size={30} color="#1F1F1F" />
                 ) : (
-                  <Text
-                    className={`text-[19px] font-medium ${
-                      isActive ? "text-white" : "text-black"
-                    }`}
-                  >
+                  <Text className="text-[19px] font-medium text-black">
                     {chip.label}
                   </Text>
                 )}
@@ -193,12 +301,20 @@ export default function GuardianMemoryListScreen() {
         </ScrollView>
 
         <View className="mt-8 gap-7">
-          {memoryItems.length > 0 ? (
+          {isLoading ? (
+            <View className="items-center py-4">
+              <ActivityIndicator color="#174C33" />
+            </View>
+          ) : memoryItems.length > 0 ? (
             memoryItems.map((item) => (
               <MemoryCard
                 key={item.id}
                 item={item}
+                isOpen={selectedMemoryId === item.id}
                 onToggleFavorite={toggleFavorite}
+                onToggleDetail={(id) =>
+                  setSelectedMemoryId((current) => (current === id ? null : id))
+                }
               />
             ))
           ) : (

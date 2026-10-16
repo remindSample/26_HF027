@@ -292,7 +292,7 @@ export default function SignupScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-white"
+      className="flex-1 bg-[#FDF2EC]"
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
@@ -300,7 +300,7 @@ export default function SignupScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="bg-white pt-20 px-[12px]">
+        <View className="bg-[#FDF2EC] pt-20 px-[12px]">
           <SignupHeader
             title={headerTitle}
             titleClassName={headerTitleClassName}

@@ -5,6 +5,7 @@ import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import Header from "@/components/Header";
 import {
   getAnswerReportHistory,
+  getCurrentGuardianAcceptedLink,
   getMonthlyAnswerReport,
   getMonthlyGameReport,
   type MonthlyGameReport,
@@ -89,16 +90,28 @@ export default function DetailScreen() {
         setIsSentimentLoading(true);
         setIsHistoryLoading(true);
         try {
+          const link = await getCurrentGuardianAcceptedLink();
+          if (!link) {
+            if (isMounted) {
+              setSentiment(null);
+              setGameReport(null);
+              setHistory(null);
+            }
+            return;
+          }
+
           const now = new Date();
           const report = await getMonthlyAnswerReport(
             now.getFullYear(),
-            now.getMonth() + 1
+            now.getMonth() + 1,
+            link.elder_id
           );
           const gameData = await getMonthlyGameReport(
             now.getFullYear(),
-            now.getMonth() + 1
+            now.getMonth() + 1,
+            link.elder_id
           );
-          const historyData = await getAnswerReportHistory(4);
+          const historyData = await getAnswerReportHistory(4, link.elder_id);
           if (isMounted) {
             setSentiment({
               positive: report.sentiment_summary.positive ?? 0,
@@ -197,7 +210,7 @@ export default function DetailScreen() {
       : "지난달 비교 데이터 없음";
 
   return (
-    <View className="flex-1 bg-[#F0F8FF]">
+    <View className="flex-1 bg-[#FDF2EC]">
       <Header title="상세 지표" />
 
       <ScrollView

@@ -28,6 +28,7 @@ class AnswerResponse(BaseModel):
     positive_score: int | None
     negative_score: int | None
     answered_at: datetime
+    question_content: str | None = None
     model_config = {"from_attributes": True}
 
 class RecentAnswerResponse(AnswerResponse):

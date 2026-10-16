@@ -28,6 +28,7 @@ export type AnswerResponse = {
   positive_score: number | null;
   negative_score: number | null;
   answered_at: string;
+  question_content?: string | null;
 };
 
 export type RecentAnswerResponse = AnswerResponse & {
@@ -83,6 +84,18 @@ export async function getRecentAnswers(limit = 5, userId?: number) {
 
   return apiRequest<RecentAnswerResponse[]>(
     `/answers/recent?user_id=${resolvedUserId}&limit=${limit}`
+  );
+}
+
+export async function getGuardianRecentAnswers(elderId: number, limit = 5) {
+  const session = await getAuthSession();
+
+  return apiRequest<RecentAnswerResponse[]>(
+    `/answers/guardian/${elderId}/recent?limit=${limit}`,
+    {
+      authToken: session?.access_token,
+      defaultErrorMessage: "사용자 답변을 불러오지 못했습니다.",
+    }
   );
 }
 
