@@ -38,6 +38,25 @@ const SMART_GLOVE_SIDES: Side[] = ["LEFT", "RIGHT"];
 let manager: BleManager | null = null;
 let connectedDevices: Partial<Record<Side, Device>> = {};
 let notifySubscriptions: { remove: () => void }[] = [];
+const connectionListeners = new Set<(sides: Side[]) => void>();
+const disconnectSubscriptions: Partial<Record<Side, { remove: () => void }>> = {};
+
+function notifyConnectionListeners() {
+  for (const side of SMART_GLOVE_SIDES) {
+    if (!connectedDevices[side]) {
+      disconnectSubscriptions[side]?.remove();
+      delete disconnectSubscriptions[side];
+    }
+  }
+  const sides = getConnectedSmartGloveSides();
+  connectionListeners.forEach((listener) => listener(sides));
+}
+
+export function subscribeSmartGloveConnection(listener: (sides: Side[]) => void) {
+  connectionListeners.add(listener);
+  listener(getConnectedSmartGloveSides());
+  return () => { connectionListeners.delete(listener); };
+}
 
 function getManager() {
   if (!manager) {
@@ -70,15 +89,17 @@ export function getConnectedSmartGloveTitle() {
 }
 
 export async function isSmartGloveConnected() {
+  const snapshot = connectedDevices;
   try {
     const connectedEntries = await Promise.all(
-      Object.entries(connectedDevices).map(async ([side, device]) => ({
+      Object.entries(snapshot).map(async ([side, device]) => ({
         side: side as Side,
         device,
         connected: await (device?.isConnected() ?? false)
       }))
     );
 
+    if (connectedDevices !== snapshot) return getConnectedSmartGloveSides().length > 0;
     connectedDevices = connectedEntries.reduce<Partial<Record<Side, Device>>>(
       (nextDevices, entry) => {
         if (entry.connected) nextDevices[entry.side] = entry.device;
@@ -87,8 +108,12 @@ export async function isSmartGloveConnected() {
       {}
     );
 
+    notifyConnectionListeners();
     return connectedEntries.some((entry) => entry.connected);
   } catch {
+    if (connectedDevices !== snapshot) return getConnectedSmartGloveSides().length > 0;
+    connectedDevices = {};
+    notifyConnectionListeners();
     return false;
   }
 }
@@ -134,6 +159,17 @@ export async function connectSmartGlove(
     ...Object.fromEntries(connectedEntries)
   };
 
+  for (const [side, device] of connectedEntries) {
+    disconnectSubscriptions[side]?.remove();
+    disconnectSubscriptions[side] = device.onDisconnected(() => {
+      if (connectedDevices[side] !== device) return;
+      connectedDevices = { ...connectedDevices };
+      delete connectedDevices[side];
+      notifyConnectionListeners();
+    });
+  }
+  notifyConnectionListeners();
+
   options.onStateChange?.("connected");
   const nextConnectedSides = getConnectedSmartGloveSides();
   return {
@@ -163,6 +199,7 @@ export async function disconnectSmartGlove() {
     );
   } finally {
     connectedDevices = {};
+    notifyConnectionListeners();
   }
 }
 

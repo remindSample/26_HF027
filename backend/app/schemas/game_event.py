@@ -6,8 +6,8 @@ from pydantic import BaseModel
 class EventCreate(BaseModel):
     session_id: int
     hand_side: Literal["LEFT", "RIGHT"]
-    target_gesture: Literal["FIST", "PALM"]
-    user_input: Literal["FIST", "PALM"] | None = None
+    target_gesture: Literal["FIST", "PALM", "SCISSORS"]
+    user_input: Literal["FIST", "PALM", "SCISSORS"] | None = None
     is_correct: bool
 
 

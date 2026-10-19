@@ -9,8 +9,32 @@ export type GameSessionResponse = {
   started_at: string;
 };
 
-export type GameGesture = "FIST" | "PALM";
+export type GameGesture = "FIST" | "PALM" | "SCISSORS";
 export type GameHand = "LEFT" | "RIGHT";
+
+export type GameEventPayload = {
+  session_id: number;
+  hand_side: GameHand;
+  target_gesture: GameGesture;
+  user_input: GameGesture | null;
+  is_correct: boolean;
+};
+
+export type GameEventResponse = GameEventPayload & {
+  id: number;
+  created_at: string;
+};
+
+export type GameSessionResult = {
+  id: number;
+  level: number;
+  total_score: number;
+  success_count: number;
+  total_count: number;
+  accuracy: number;
+  started_at: string;
+  ended_at: string | null;
+};
 
 export type MonthlyGameReport = {
   year: number;
@@ -33,17 +57,19 @@ export async function startGameSession(level: number, userId?: number) {
   });
 }
 
-export function saveGameEvent(payload: {
-  session_id: number;
-  hand_side: GameHand;
-  target_gesture: GameGesture;
-  user_input: GameGesture | null;
-  is_correct: boolean;
-}) {
-  return apiRequest("/game/events", {
+export function saveGameEvent(payload: GameEventPayload) {
+  return apiRequest<GameEventResponse>("/game/events", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export function getGameEvents(sessionId: number) {
+  return apiRequest<GameEventResponse[]>(`/game/events/${sessionId}`);
+}
+
+export function getGameSessionResult(sessionId: number) {
+  return apiRequest<GameSessionResult>(`/game/sessions/${sessionId}/result`);
 }
 
 export function finishGameSession(
@@ -51,7 +77,7 @@ export function finishGameSession(
   successCount: number,
   totalCount: number
 ) {
-  return apiRequest(`/game/sessions/${sessionId}/finish`, {
+  return apiRequest<GameSessionResult>(`/game/sessions/${sessionId}/finish`, {
     method: "POST",
     body: JSON.stringify({
       success_count: successCount,
