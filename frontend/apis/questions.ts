@@ -1,5 +1,5 @@
 import { apiRequest } from "./client";
-import { getCurrentUserId } from "./session";
+import { getAuthSession, getCurrentUserId } from "./session";
 
 export type QuestionResponse = {
   id: number;
@@ -38,4 +38,50 @@ export async function generateQuestion(tag: QuestionTag, userId?: number) {
       target_user_id: resolvedUserId,
     }),
   });
+}
+
+export type GuardianQuestionResponse = QuestionResponse & {
+  answered: boolean;
+  answered_at: string | null;
+  guardian_name: string | null;
+};
+
+export async function createGuardianQuestion(content: string, targetUserId: number) {
+  const session = await getAuthSession();
+
+  return apiRequest<QuestionResponse>("/questions/guardian", {
+    method: "POST",
+    authToken: session?.access_token,
+    defaultErrorMessage: "질문 등록에 실패했습니다.",
+    body: JSON.stringify({
+      content,
+      target_user_id: targetUserId,
+    }),
+  });
+}
+
+export async function getGuardianQuestions(userId?: number) {
+  const session = await getAuthSession();
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
+  return apiRequest<GuardianQuestionResponse[]>(
+    `/questions/user/${resolvedUserId}/guardian`,
+    {
+      authToken: session?.access_token,
+      defaultErrorMessage: "보호자 질문을 불러오지 못했습니다.",
+    }
+  );
+}
+
+export async function getGuardianUnansweredCount(userId?: number) {
+  const session = await getAuthSession();
+  const resolvedUserId = userId ?? await getCurrentUserId();
+
+  return apiRequest<{ count: number }>(
+    `/questions/user/${resolvedUserId}/guardian/unanswered-count`,
+    {
+      authToken: session?.access_token,
+      defaultErrorMessage: "보호자 질문 개수를 불러오지 못했습니다.",
+    }
+  );
 }

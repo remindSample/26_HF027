@@ -3,17 +3,18 @@ import { type Href, router, useLocalSearchParams } from "expo-router";
 import { Pressable, Text, View } from "react-native";
  
 export default function AnswerMethodScreen() {
-  const { questionId, qType, questionText } = useLocalSearchParams<{
+  const { questionId, qType, questionText, from } = useLocalSearchParams<{
     questionId: string;
     qType: string;
     questionText: string;
+    from?: string;
   }>();
 
   const goTo = (method: "camera" | "gallery" | "write") => {
     console.log("goTo called:", method);
     router.push({
       pathname: `/answer/${method}`,
-      params: { questionId, qType, questionText },
+      params: { questionId, qType, questionText, ...(from ? { from } : {}) },
     } as Href);
     console.log("router.push done for:", method);
   };
