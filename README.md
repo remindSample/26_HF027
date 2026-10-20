@@ -1,4 +1,4 @@
-<img width="1056" height="702" alt="image" src="https://github.com/user-attachments/assets/1206f727-5348-48c7-a724-df48cba097fd" />2026 덕성여대 컴퓨터공학전공 캡스톤 프로젝트입니다. 
+2026 덕성여대 컴퓨터공학전공 캡스톤 프로젝트입니다. 
 
 # ReMind 
 프로젝트 이름: ReMind
