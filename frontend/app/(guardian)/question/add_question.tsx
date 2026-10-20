@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,15 +11,36 @@ import {
   View,
 } from "react-native";
 
+import { createGuardianQuestion, getCurrentGuardianAcceptedLink } from "@/apis";
 import Header from "../components/Header";
 
 export default function GuardianQuestionAddScreen() {
   const [question, setQuestion] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitQuestion = () => {
-    if (!question.trim()) return;
+  const submitQuestion = async () => {
+    if (!question.trim() || isSubmitting) return;
 
-    router.back();
+    setIsSubmitting(true);
+
+    try {
+      const link = await getCurrentGuardianAcceptedLink();
+
+      if (!link) {
+        Alert.alert("알림", "연결된 사용자가 없습니다. 먼저 사용자와 계정을 연결해주세요.");
+        return;
+      }
+
+      await createGuardianQuestion(question.trim(), link.elder_id);
+      router.back();
+    } catch (error) {
+      Alert.alert(
+        "알림",
+        error instanceof Error ? error.message : "질문 등록에 실패했습니다."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

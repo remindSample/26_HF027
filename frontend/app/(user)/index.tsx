@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image as ExpoImage } from "expo-image";
-import { Link, router } from "expo-router";
+import { Link, router, useFocusEffect } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
-import { getAuthSession, getRecentAnswers } from "@/apis";
+import { getAuthSession, getGuardianUnansweredCount, getRecentAnswers } from "@/apis";
 import Ic_Game3 from "../../assets/Icon/Ic_Game3.png";
 import IcSettings from "../../assets/Icon/Ic_Settings2.png";
 import LogoReMind from "../../assets/Icon/Logo_ReMind.png";
+import IcMailBox from "@/assets/Icon/Ic_mailBox.png";
 
 const ONBOARDING_STORAGE_KEY_PREFIX = "remind_user_onboarding_seen";
 type RecentMemory = {
@@ -85,8 +86,35 @@ export default function HomeScreen() {
   const [recentMemoriesError, setRecentMemoriesError] = useState<string | null>(
     null,
   );
+  const [hasMail, setHasMail] = useState(false);
   const currentOnboardingStep = ONBOARDING_STEPS[onboardingStep];
   const isLastOnboardingStep = onboardingStep === ONBOARDING_STEPS.length - 1;
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function loadGuardianUnansweredCount() {
+        try {
+          const { count } = await getGuardianUnansweredCount();
+
+          if (isMounted) {
+            setHasMail(count > 0);
+          }
+        } catch {
+          // 조회에 실패하면 이전 표시 상태를 유지합니다.
+        }
+      }
+
+      loadGuardianUnansweredCount();
+      const timer = setInterval(loadGuardianUnansweredCount, 10000);
+
+      return () => {
+        isMounted = false;
+        clearInterval(timer);
+      };
+    }, []),
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -185,6 +213,19 @@ export default function HomeScreen() {
   return (
     <View className="flex-1 bg-[#FDF2EC]">
       <View className="relative h-[104px] flex-row items-center justify-center px-[28px] pt-4">
+        <Pressable
+          onPress={() => router.push("/(user)/mailbox")}
+          className="absolute left-[28px] top-[34px] h-[48px] w-[48px] items-center justify-center"
+        >
+          <ExpoImage
+            source={IcMailBox}
+            contentFit="contain"
+            style={{ width: 42, height: 42 }}
+          />
+          {hasMail && (
+            <View className="absolute right-1 top-1 h-3 w-3 rounded-full bg-red-500" />
+          )}
+        </Pressable>
         <ExpoImage
           source={LogoReMind}
           contentFit="contain"

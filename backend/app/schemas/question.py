@@ -37,3 +37,18 @@ class QuestionResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class GuardianQuestionCreate(BaseModel):
+    content: str
+    target_user_id: int
+
+
+class GuardianQuestionResponse(QuestionResponse):
+    answered: bool
+    answered_at: datetime | None
+    guardian_name: str | None
+
+
+class GuardianUnansweredCountResponse(BaseModel):
+    count: int

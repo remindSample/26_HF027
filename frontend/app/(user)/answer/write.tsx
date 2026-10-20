@@ -5,9 +5,10 @@ import { useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
 
 export default function WriteAnswerScreen() {
-  const { questionId, questionText } = useLocalSearchParams<{
+  const { questionId, questionText, from } = useLocalSearchParams<{
     questionId?: string;
     questionText?: string;
+    from?: string;
   }>();
   const [draft, setDraft] = useState("");
   const [answerText, setAnswerText] = useState<string | null>(null);
@@ -66,11 +67,11 @@ export default function WriteAnswerScreen() {
 
       if (streak >= 2) {
         Alert.alert("연속답변일수!", `${streak}일 연속으로 답변했어요.`, [
-          { text: "확인", onPress: () => router.push("/question") },
+          { text: "확인", onPress: () => from === "mailbox" ? router.replace("/(user)/mailbox") : router.push("/question") },
         ]);
       } else {
         Alert.alert("알림", "답변이 저장되었습니다.", [
-          { text: "확인", onPress: () => router.push("/question") },
+          { text: "확인", onPress: () => from === "mailbox" ? router.replace("/(user)/mailbox") : router.push("/question") },
         ]);
       }
     } catch (error) {

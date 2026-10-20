@@ -8,9 +8,10 @@ import { Alert, Image, Pressable, Text, View } from "react-native";
 type CameraRef = React.ElementRef<typeof CameraView>;
 
 export default function CameraAnswerScreen() {
-  const { questionId, questionText } = useLocalSearchParams<{
+  const { questionId, questionText, from } = useLocalSearchParams<{
     questionId?: string;
     questionText?: string;
+    from?: string;
   }>();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraRef>(null);
@@ -33,7 +34,7 @@ export default function CameraAnswerScreen() {
         imageUri: nextImageUri,
       });
       Alert.alert("알림", "답변이 등록되었습니다!", [
-        { text: "확인", onPress: () => router.push("/question") },
+        { text: "확인", onPress: () => from === "mailbox" ? router.replace("/(user)/mailbox") : router.push("/question") },
       ]);
     } catch (error) {
       Alert.alert(
