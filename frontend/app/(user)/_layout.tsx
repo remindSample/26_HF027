@@ -1,4 +1,4 @@
-import { Redirect, Slot } from "expo-router";
+import { Redirect, Slot, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,6 +7,7 @@ import { getAuthSession } from "@/apis";
 import type { LoginResponse } from "@/apis";
 
 export default function TabsLayout() {
+  const segments = useSegments();
   const [session, setSession] = useState<LoginResponse | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
@@ -45,6 +46,10 @@ export default function TabsLayout() {
 
   if (session?.user.role !== "USER") {
     return <Redirect href="/login" />;
+  }
+
+  if (segments[1] === "game") {
+    return <Slot />;
   }
 
   return (

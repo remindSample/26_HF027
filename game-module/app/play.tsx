@@ -1,21 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useAudioPlayer } from "expo-audio";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Pressable,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import VolumeSettingsButton from "../src/VolumeSettingsButton";
+import SmartGloveStatusIcon from "../src/SmartGloveStatusIcon";
 import { Gesture, Side } from "../src/gloveInput";
-import {
-  getConnectedSmartGloveSides,
-  isSmartGloveConnected,
-  subscribeSmartGloveInput
-} from "../src/smartGloveBle";
+import { useAudioSettings } from "../src/audioSettings";
+import { subscribeSmartGloveInput } from "../src/smartGloveBle";
 
 type GestureType = Gesture;
 type Lane = "left" | "right";
@@ -32,17 +31,18 @@ interface Note {
 }
 
 const NOTE_SIZE = 56;
-const FALL_DURATION = 3500;
+const LEVEL_SETTINGS: Record<string, { fallDuration: number; scissorsEnabled: boolean }> = {
+  "1": { fallDuration: 5000, scissorsEnabled: false },
+  "2": { fallDuration: 4250, scissorsEnabled: false },
+  "3": { fallDuration: 3500, scissorsEnabled: true },
+  "4": { fallDuration: 2750, scissorsEnabled: true },
+  "5": { fallDuration: 2250, scissorsEnabled: true }
+};
 const SPAWN_INTERVAL = 2600;
 const FEEDBACK_DURATION = 750;
+const RESULT_DELAY = 1500;
 const HIT_ZONE_PX = 90;
 const TOTAL_PAIRS = 10;
-const CONNECTED_HAND_COLOR = "#F5A142";
-const BOTH_CONNECTED_HAND_COLOR = "#9FE27B";
-
-function areBothHandsConnected(sides: Side[]) {
-  return sides.includes("LEFT") && sides.includes("RIGHT");
-}
 
 const GESTURE_EMOJI: Record<GestureType, string> = {
   PALM: "🖐️",
@@ -56,6 +56,33 @@ function genId() {
 
 export default function GamePlayScreen() {
   const { level } = useLocalSearchParams<{ level?: string }>();
+  const { fallDuration, scissorsEnabled } = LEVEL_SETTINGS[level ?? "1"] ?? LEVEL_SETTINGS["1"];
+  const { settings, ready: audioReady } = useAudioSettings();
+  const greatPlayer = useAudioPlayer(require("../assets/sounds/great.mp3"));
+  const closePlayer = useAudioPlayer(require("../assets/sounds/close.mp3"));
+  const missPlayer = useAudioPlayer(require("../assets/sounds/miss.mp3"));
+  const feedbackSoundIdRef = useRef(0);
+
+  useEffect(() => {
+    for (const player of [greatPlayer, closePlayer, missPlayer]) {
+      player.volume = settings.effectsVolume;
+      player.muted = !audioReady || settings.effectsMuted;
+    }
+  }, [greatPlayer, closePlayer, missPlayer, audioReady, settings.effectsVolume, settings.effectsMuted]);
+
+  const playFeedbackSound = useCallback(async (type: FeedbackType) => {
+    const soundId = ++feedbackSoundIdRef.current;
+    try {
+      greatPlayer.pause();
+      closePlayer.pause();
+      missPlayer.pause();
+      const player = { great: greatPlayer, close: closePlayer, miss: missPlayer }[type];
+      await player.seekTo(0);
+      if (soundId === feedbackSoundIdRef.current) player.play();
+    } catch (error) {
+      console.warn("Feedback sound playback failed:", error);
+    }
+  }, [greatPlayer, closePlayer, missPlayer]);
 
   const [notes, setNotes] = useState<Note[]>([]);
   const [score, setScore] = useState(0);
@@ -65,9 +92,8 @@ export default function GamePlayScreen() {
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [columnHeight, setColumnHeight] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-  const [bleStatus, setBleStatus] = useState("BLE 대기중");
-  const [isBleConnected, setIsBleConnected] = useState(false);
-  const [connectedSides, setConnectedSides] = useState<Side[]>(getConnectedSmartGloveSides());
+  const [bleStatus, setBleStatus] = useState("대기중");
+  const [receivedGestures, setReceivedGestures] = useState<Partial<Record<Side, Gesture>>>({});
 
   const notesRef = useRef<Note[]>([]);
   const columnHeightRef = useRef(0);
@@ -93,22 +119,26 @@ export default function GamePlayScreen() {
 
   useEffect(() => {
     if (gameOver && notes.length === 0 && !navigatedRef.current) {
-      navigatedRef.current = true;
-      const accuracy =
-        totalPairsRef.current > 0
-          ? Math.round((correctPairsRef.current / totalPairsRef.current) * 100)
-          : 0;
+      const resultTimer = setTimeout(() => {
+        if (isUnmountedRef.current || navigatedRef.current) return;
+        navigatedRef.current = true;
+        const accuracy =
+          totalPairsRef.current > 0
+            ? Math.round((correctPairsRef.current / totalPairsRef.current) * 100)
+            : 0;
 
-      router.replace({
-        pathname: "/result",
-        params: {
-          score: String(scoreRef.current),
-          level: level ?? "1",
-          accuracy: String(accuracy),
-          maxCombo: String(maxComboRef.current),
-          exerciseCount: String(exerciseCountRef.current)
-        }
-      });
+        router.replace({
+          pathname: "/result",
+          params: {
+            score: String(scoreRef.current),
+            level: level ?? "1",
+            accuracy: String(accuracy),
+            maxCombo: String(maxComboRef.current),
+            exerciseCount: String(exerciseCountRef.current)
+          }
+        });
+      }, RESULT_DELAY);
+      return () => clearTimeout(resultTimer);
     }
   }, [gameOver, notes.length, level]);
 
@@ -116,10 +146,11 @@ export default function GamePlayScreen() {
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     setFeedback(type);
     setFeedbackVisible(true);
+    void playFeedbackSound(type);
     feedbackTimerRef.current = setTimeout(() => {
       if (!isUnmountedRef.current) setFeedbackVisible(false);
     }, FEEDBACK_DURATION);
-  }, []);
+  }, [playFeedbackSound]);
 
   const resolveLane = useCallback(
     (pairId: string, lane: Lane, result: "correct" | "wrong") => {
@@ -162,8 +193,10 @@ export default function GamePlayScreen() {
       const note: Note = {
         id: genId(),
         pairId,
-        // SCISSORS 25%, PALM 37.5%, FIST 37.5% (양손 각각 독립 생성).
-        type: gestureRoll < 0.25 ? "SCISSORS" : gestureRoll < 0.625 ? "PALM" : "FIST",
+        // 1~2레벨: PALM/FIST 각 50%, 3~5레벨: SCISSORS 25%, PALM/FIST 각 37.5% (양손 각각 독립 생성).
+        type: scissorsEnabled
+          ? gestureRoll < 0.25 ? "SCISSORS" : gestureRoll < 0.625 ? "PALM" : "FIST"
+          : gestureRoll < 0.5 ? "PALM" : "FIST",
         lane,
         startTime: Date.now(),
         yAnim: new Animated.Value(-NOTE_SIZE)
@@ -175,7 +208,7 @@ export default function GamePlayScreen() {
 
       Animated.timing(note.yAnim, {
         toValue: colH,
-        duration: FALL_DURATION,
+        duration: fallDuration,
         useNativeDriver: true
       }).start(({ finished }) => {
         if (!finished) return;
@@ -192,7 +225,7 @@ export default function GamePlayScreen() {
         }
       });
     },
-    [resolveLane]
+    [resolveLane, fallDuration, scissorsEnabled]
   );
 
   const spawnPair = useCallback(() => {
@@ -241,6 +274,7 @@ export default function GamePlayScreen() {
   useEffect(() => {
     return () => {
       isUnmountedRef.current = true;
+      feedbackSoundIdRef.current += 1;
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     };
   }, []);
@@ -263,7 +297,7 @@ export default function GamePlayScreen() {
 
       for (const note of laneNotes) {
         const elapsed = now - note.startTime;
-        const progress = Math.min(elapsed / FALL_DURATION, 1);
+        const progress = Math.min(elapsed / fallDuration, 1);
         const y = -NOTE_SIZE + progress * totalFall;
         if (y > highestY) {
           highestY = y;
@@ -289,7 +323,7 @@ export default function GamePlayScreen() {
         bottommost.type === gesture ? "correct" : "wrong"
       );
     },
-    [resolveLane]
+    [resolveLane, fallDuration]
   );
 
   const handleInput = useCallback(
@@ -303,25 +337,14 @@ export default function GamePlayScreen() {
     let cleanup: (() => void) | undefined;
     let isMounted = true;
 
-    isSmartGloveConnected().then((connected) => {
-      if (isMounted) {
-        setIsBleConnected(connected);
-        setConnectedSides(getConnectedSmartGloveSides());
-      }
-    });
-
     subscribeSmartGloveInput({
-      onInput: (input) => handleInput(input.side, input.gesture),
-      onMessage: (message) => {
-        if (isMounted) {
-          setIsBleConnected(true);
-          setConnectedSides(getConnectedSmartGloveSides());
-          setBleStatus(`BLE 수신: ${message}`);
-        }
+      onInput: (input) => {
+        if (!isMounted) return;
+        setReceivedGestures((current) => ({ ...current, [input.side]: input.gesture }));
+        handleInput(input.side, input.gesture);
       },
       onError: (error) => {
         if (isMounted) {
-          setIsBleConnected(false);
           setBleStatus(error.message);
         }
       }
@@ -329,14 +352,11 @@ export default function GamePlayScreen() {
       .then((unsubscribe) => {
         cleanup = unsubscribe;
         if (isMounted) {
-          setIsBleConnected(true);
-          setConnectedSides(getConnectedSmartGloveSides());
-          setBleStatus("BLE 입력 수신중");
+          setBleStatus("대기중");
         }
       })
       .catch((error) => {
         if (isMounted) {
-          setIsBleConnected(false);
           setBleStatus(error instanceof Error ? error.message : "BLE 입력 연결 실패");
         }
       });
@@ -348,9 +368,9 @@ export default function GamePlayScreen() {
   }, [handleInput]);
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safeArea}>
-      <View style={styles.headerWrap}>
-        <GameHeader isConnected={isBleConnected} connectedSides={connectedSides} />
+    <SafeAreaView edges={["top"]} className="flex-1 bg-[#535353]">
+      <View className="px-[16px]">
+        <GameHeader />
       </View>
 
       <GameScoreBar
@@ -359,20 +379,30 @@ export default function GamePlayScreen() {
         exerciseCount={exerciseCount}
       />
 
-      <View style={styles.bleStatusBar}>
-        <Ionicons name="bluetooth" size={15} color="#8FD0A8" />
-        <Text style={styles.bleStatusText}>{bleStatus}</Text>
+      <View className="mx-[16px] mb-[2px] h-[24px] flex-row items-center gap-[10px]">
+        <View className="min-w-0 flex-1 flex-row items-center justify-center gap-[6px]">
+          <Ionicons name="bluetooth" size={15} color="#8FD0A8" />
+          <Text numberOfLines={1} className="min-w-0 shrink text-[#D9D9D9] text-[11px] font-semibold">
+            왼손: {receivedGestures.LEFT ?? bleStatus}
+          </Text>
+        </View>
+        <View className="min-w-0 flex-1 flex-row items-center justify-center gap-[6px]">
+          <Ionicons name="bluetooth" size={15} color="#8FD0A8" />
+          <Text numberOfLines={1} className="min-w-0 shrink text-[#D9D9D9] text-[11px] font-semibold">
+            오른손: {receivedGestures.RIGHT ?? bleStatus}
+          </Text>
+        </View>
       </View>
 
-      <View style={styles.laneLabels}>
-        <Text style={styles.laneLabelText}>왼손</Text>
-        <View style={styles.columnGap} />
-        <Text style={styles.laneLabelText}>오른손</Text>
+      <View className="px-[16px] mt-[2px] mb-[4px] flex-row">
+        <Text className="flex-1 text-[#D9D9D9] text-center text-[15px] font-semibold">왼손</Text>
+        <View className="w-[10px]" />
+        <Text className="flex-1 text-[#D9D9D9] text-center text-[15px] font-semibold">오른손</Text>
       </View>
 
-      <View style={styles.gameArea}>
+      <View className="flex-1 px-[16px] mb-[8px] flex-row">
         <View
-          style={styles.column}
+          className="flex-1 overflow-hidden rounded-[14px] bg-[#DCDCDC]"
           onLayout={(event) => {
             const h = event.nativeEvent.layout.height;
             columnHeightRef.current = h;
@@ -382,32 +412,36 @@ export default function GamePlayScreen() {
           {notes
             .filter((item) => item.lane === "left")
             .map((note) => (
-              <Animated.View
+              <View
                 key={note.id}
-                style={[styles.noteWrap, { transform: [{ translateY: note.yAnim }] }]}
+                className="absolute top-[0px] left-[0px] right-[0px] h-[56px] items-center justify-center"
               >
-                <View style={styles.noteBox}>
-                  <Text style={styles.noteText}>{GESTURE_EMOJI[note.type]}</Text>
-                </View>
-              </Animated.View>
+                <Animated.View style={{ transform: [{ translateY: note.yAnim }] }}>
+                  <View className="w-[56px] h-[56px] items-center justify-center rounded-[10px] bg-[rgba(255,255,255,0.8)]">
+                    <Text className="text-[36px]">{GESTURE_EMOJI[note.type]}</Text>
+                  </View>
+                </Animated.View>
+              </View>
             ))}
           <DashedHitLine />
         </View>
 
-        <View style={styles.columnGap} />
+        <View className="w-[10px]" />
 
-        <View style={styles.column}>
+        <View className="flex-1 overflow-hidden rounded-[14px] bg-[#DCDCDC]">
           {notes
             .filter((item) => item.lane === "right")
             .map((note) => (
-              <Animated.View
+              <View
                 key={note.id}
-                style={[styles.noteWrap, { transform: [{ translateY: note.yAnim }] }]}
+                className="absolute top-[0px] left-[0px] right-[0px] h-[56px] items-center justify-center"
               >
-                <View style={styles.noteBox}>
-                  <Text style={styles.noteText}>{GESTURE_EMOJI[note.type]}</Text>
-                </View>
-              </Animated.View>
+                <Animated.View style={{ transform: [{ translateY: note.yAnim }] }}>
+                  <View className="w-[56px] h-[56px] items-center justify-center rounded-[10px] bg-[rgba(255,255,255,0.8)]">
+                    <Text className="text-[36px]">{GESTURE_EMOJI[note.type]}</Text>
+                  </View>
+                </Animated.View>
+              </View>
             ))}
           <DashedHitLine />
         </View>
@@ -415,50 +449,50 @@ export default function GamePlayScreen() {
         <FeedbackModal visible={feedbackVisible} type={feedback} />
       </View>
 
-      <View style={styles.inputSection}>
-        <Text style={styles.inputTitle}>[임시용] 제스처 입력</Text>
-        <View style={styles.inputRow}>
-          <View style={styles.inputGroup}>
+      <View className="px-[16px] pb-[12px]">
+        <Text className="mb-[6px] text-[#D9D9D9] text-center text-[11px]">[임시용] 제스처 입력</Text>
+        <View className="flex-row">
+          <View className="flex-1 flex-row gap-[8px]">
             <TouchableOpacity
-              style={styles.inputButton}
+              className="flex-1 h-[56px] items-center justify-center rounded-[12px] bg-[#7A8894]"
               onPress={() => handleInput("LEFT", "FIST")}
             >
-              <Text style={styles.inputEmoji}>✊</Text>
+              <Text className="text-[28px]">✊</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.inputButton}
+              className="flex-1 h-[56px] items-center justify-center rounded-[12px] bg-[#7A8894]"
               onPress={() => handleInput("LEFT", "PALM")}
             >
-              <Text style={styles.inputEmoji}>🖐️</Text>
+              <Text className="text-[28px]">🖐️</Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityLabel="왼손 SCISSORS 입력"
-              style={styles.inputButton}
+              className="flex-1 h-[56px] items-center justify-center rounded-[12px] bg-[#7A8894]"
               onPress={() => handleInput("LEFT", "SCISSORS")}
             >
-              <Text style={styles.inputEmoji}>{GESTURE_EMOJI.SCISSORS}</Text>
+              <Text className="text-[28px]">{GESTURE_EMOJI.SCISSORS}</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.columnGap} />
-          <View style={styles.inputGroup}>
+          <View className="w-[10px]" />
+          <View className="flex-1 flex-row gap-[8px]">
             <TouchableOpacity
-              style={styles.inputButton}
+              className="flex-1 h-[56px] items-center justify-center rounded-[12px] bg-[#7A8894]"
               onPress={() => handleInput("RIGHT", "FIST")}
             >
-              <Text style={styles.inputEmoji}>✊</Text>
+              <Text className="text-[28px]">✊</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.inputButton}
+              className="flex-1 h-[56px] items-center justify-center rounded-[12px] bg-[#7A8894]"
               onPress={() => handleInput("RIGHT", "PALM")}
             >
-              <Text style={styles.inputEmoji}>🖐️</Text>
+              <Text className="text-[28px]">🖐️</Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityLabel="오른손 SCISSORS 입력"
-              style={styles.inputButton}
+              className="flex-1 h-[56px] items-center justify-center rounded-[12px] bg-[#7A8894]"
               onPress={() => handleInput("RIGHT", "SCISSORS")}
             >
-              <Text style={styles.inputEmoji}>{GESTURE_EMOJI.SCISSORS}</Text>
+              <Text className="text-[28px]">{GESTURE_EMOJI.SCISSORS}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -467,39 +501,23 @@ export default function GamePlayScreen() {
   );
 }
 
-function GameHeader({
-  isConnected,
-  connectedSides
-}: {
-  isConnected: boolean;
-  connectedSides: Side[];
-}) {
+function GameHeader() {
   return (
-    <View style={styles.gameHeader}>
+    <View className="w-full pt-[20px] flex-row items-center justify-between">
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="나가기"
-        style={styles.backButton}
+        className="min-h-[48px] flex-row items-center pr-[16px]"
         onPress={() => router.back()}
       >
         <Ionicons name="exit-outline" size={34} color="#FFFFFF" />
-        <Text style={styles.backText}>나가기</Text>
-        <View style={styles.deviceIconWrap}>
-          <Ionicons
-            name="hand-left"
-            size={28}
-            color={
-              isConnected
-                ? areBothHandsConnected(connectedSides)
-                  ? BOTH_CONNECTED_HAND_COLOR
-                  : CONNECTED_HAND_COLOR
-                : "#E57474"
-            }
-          />
+        <Text className="ml-[12px] text-[#FFFFFF] text-[20px] font-medium">나가기</Text>
+        <View className="ml-[12px]">
+          <SmartGloveStatusIcon size={28} />
         </View>
       </Pressable>
 
-      <Ionicons name="volume-high-outline" size={34} color="#FFFFFF" />
+      <VolumeSettingsButton />
     </View>
   );
 }
@@ -514,7 +532,7 @@ function GameScoreBar({
   exerciseCount: number;
 }) {
   return (
-    <View style={styles.scoreBar}>
+    <View className="py-[10px] flex-row items-center justify-evenly">
       <StatItem value={score.toLocaleString()} label="점수" />
       <StatItem value={String(consecutiveCount)} label="연속성공횟수" />
       <StatItem value={String(exerciseCount)} label="운동량" />
@@ -524,9 +542,9 @@ function GameScoreBar({
 
 function StatItem({ value, label }: { value: string; label: string }) {
   return (
-    <View style={styles.statItem}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+    <View className="items-center">
+      <Text className="text-[#D9D9D9] text-[22px] font-bold">{value}</Text>
+      <Text className="mt-[2px] text-[#D9D9D9] text-[18px]">{label}</Text>
     </View>
   );
 }
@@ -543,30 +561,24 @@ function FeedbackModal({
   const config = {
     great: {
       label: "잘했어요 !",
-      bgColor: "rgba(118,134,156,0.44)",
-      borderColor: "rgba(91,106,137,0.55)"
+      className: "bg-[rgba(118,134,156,0.44)] border-[rgba(91,106,137,0.55)]"
     },
     close: {
       label: "아쉬워요 !",
-      bgColor: "rgba(125,156,118,0.44)",
-      borderColor: "rgba(109,137,91,0.55)"
+      className: "bg-[rgba(125,156,118,0.44)] border-[rgba(109,137,91,0.55)]"
     },
     miss: {
       label: "실수예요 !",
-      bgColor: "rgba(156,118,118,0.44)",
-      borderColor: "rgba(137,91,91,0.55)"
+      className: "bg-[rgba(156,118,118,0.44)] border-[rgba(137,91,91,0.55)]"
     }
   }[type];
 
   return (
-    <View pointerEvents="none" style={styles.feedbackOverlay}>
+    <View pointerEvents="none" className="absolute top-[0px] right-[0px] bottom-[0px] left-[0px] z-[10] items-center justify-start pt-[140px]">
       <View
-        style={[
-          styles.feedbackBox,
-          { backgroundColor: config.bgColor, borderColor: config.borderColor }
-        ]}
+        className={`px-[48px] py-[12px] rounded-[12px] border-[2px] ${config.className}`}
       >
-        <Text style={styles.feedbackText}>{config.label}</Text>
+        <Text className="text-[#FFFFFF] text-[20px] font-bold">{config.label}</Text>
       </View>
     </View>
   );
@@ -574,188 +586,10 @@ function FeedbackModal({
 
 function DashedHitLine() {
   return (
-    <View style={styles.hitLine}>
+    <View className="absolute left-[8px] right-[8px] bottom-[68px] flex-row items-center overflow-hidden">
       {Array.from({ length: 30 }).map((_, i) => (
-        <View key={i} style={styles.hitDash} />
+        <View key={i} className="w-[6px] h-[2px] mr-[5px] bg-[#999999]" />
       ))}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#535353"
-  },
-  headerWrap: {
-    paddingHorizontal: 16
-  },
-  gameHeader: {
-    width: "100%",
-    paddingTop: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
-  backButton: {
-    minHeight: 48,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingRight: 16
-  },
-  backText: {
-    marginLeft: 12,
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "500"
-  },
-  deviceIconWrap: {
-    marginLeft: 12
-  },
-  scoreBar: {
-    paddingVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-evenly"
-  },
-  statItem: {
-    alignItems: "center"
-  },
-  statValue: {
-    color: "#D9D9D9",
-    fontSize: 22,
-    fontWeight: "700"
-  },
-  statLabel: {
-    marginTop: 2,
-    color: "#D9D9D9",
-    fontSize: 18
-  },
-  bleStatusBar: {
-    marginHorizontal: 16,
-    marginBottom: 2,
-    minHeight: 24,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6
-  },
-  bleStatusText: {
-    color: "#D9D9D9",
-    fontSize: 11,
-    fontWeight: "600"
-  },
-  laneLabels: {
-    paddingHorizontal: 16,
-    marginTop: 2,
-    marginBottom: 4,
-    flexDirection: "row"
-  },
-  laneLabelText: {
-    flex: 1,
-    color: "#D9D9D9",
-    textAlign: "center",
-    fontSize: 15,
-    fontWeight: "600"
-  },
-  columnGap: {
-    width: 10
-  },
-  gameArea: {
-    flex: 1,
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    flexDirection: "row"
-  },
-  column: {
-    flex: 1,
-    overflow: "hidden",
-    borderRadius: 14,
-    backgroundColor: "#DCDCDC"
-  },
-  noteWrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    height: 56,
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  noteBox: {
-    width: 56,
-    height: 56,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.8)"
-  },
-  noteText: {
-    fontSize: 36
-  },
-  hitLine: {
-    position: "absolute",
-    left: 8,
-    right: 8,
-    bottom: 68,
-    flexDirection: "row",
-    alignItems: "center",
-    overflow: "hidden"
-  },
-  hitDash: {
-    width: 6,
-    height: 2,
-    marginRight: 5,
-    backgroundColor: "#999999"
-  },
-  feedbackOverlay: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    zIndex: 10,
-    alignItems: "center",
-    justifyContent: "flex-start",
-    paddingTop: 140
-  },
-  feedbackBox: {
-    paddingHorizontal: 48,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 2
-  },
-  feedbackText: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "700"
-  },
-  inputSection: {
-    paddingHorizontal: 16,
-    paddingBottom: 12
-  },
-  inputTitle: {
-    marginBottom: 6,
-    color: "#D9D9D9",
-    textAlign: "center",
-    fontSize: 11
-  },
-  inputRow: {
-    flexDirection: "row"
-  },
-  inputGroup: {
-    flex: 1,
-    flexDirection: "row",
-    gap: 8
-  },
-  inputButton: {
-    flex: 1,
-    height: 56,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 12,
-    backgroundColor: "#7A8894"
-  },
-  inputEmoji: {
-    fontSize: 28
-  }
-});

@@ -1,15 +1,20 @@
 import Header from "@/components/Header";
 import { getMonthlyAnswerReport } from "@/apis";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { Link, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import SmileFace from "../../../assets/images/smile-face.png";
+import NeutralFace from "../../../assets/images/neutral-face.png";
+import SadFace from "../../../assets/images/sad-face.png";
 
 export default function ReportMainScreen() {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   const [answerCount, setAnswerCount] = useState(0);
+  const [reportDiff, setReportDiff] = useState<number | null>(null);
   const [reportSummary, setReportSummary] = useState(
     "이번 달 답변 기록이 리포트에 반영됐어요!",
   );
@@ -24,10 +29,18 @@ export default function ReportMainScreen() {
           if (isMounted) {
             setAnswerCount(report.answer_count);
             setReportSummary(report.ai_comment);
+            const diffs = [report.word_count_diff_pct, report.unique_word_ratio_diff_pct];
+            setReportDiff(
+              diffs.find((diff) => diff !== null && diff > 0) ??
+              diffs.find((diff) => diff !== null && diff < 0) ??
+              diffs.find((diff) => diff === 0) ??
+              null,
+            );
           }
         } catch {
           if (isMounted) {
             setAnswerCount(0);
+            setReportDiff(null);
             setReportSummary("리포트 요약을 불러오지 못했어요. 잠시 후 다시 확인해주세요.");
           }
         }
@@ -74,7 +87,17 @@ export default function ReportMainScreen() {
           </View>
 
           <View className="flex-row bg-[#FFFDFB] px-4 py-10 items-center gap-6">
-            <View className="w-[104px] h-[86px] bg-[#D9D9D9] rounded-lg" />
+            <View className="w-[104px] h-[86px] items-center justify-center">
+              {reportDiff !== null ? (
+                <Image
+                  source={reportDiff > 0 ? SmileFace : reportDiff < 0 ? SadFace : NeutralFace}
+                  contentFit="contain"
+                  tintColor="#000000"
+                  accessibilityLabel={reportDiff > 0 ? "지난달 대비 증가" : reportDiff < 0 ? "지난달 대비 감소" : "지난달과 동일"}
+                  style={{ width: 86, height: 86 }}
+                />
+              ) : null}
+            </View>
             <Text className="flex-1 text-[22px] text-[#111111] leading-[34px]">
               {reportSummary}
             </Text>

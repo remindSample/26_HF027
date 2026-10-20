@@ -2,6 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import VolumeSettingsButton from "../src/VolumeSettingsButton";
+import SmartGloveStatusIcon from "../src/SmartGloveStatusIcon";
 
 const LEVEL_LABELS: Record<string, string> = {
   "1": "매우 쉬움",
@@ -125,11 +127,11 @@ function GameHeader() {
         <Ionicons name="exit-outline" size={34} color="#FFFFFF" />
         <Text className="ml-3 text-xl font-medium text-white">나가기</Text>
         <View className="ml-3">
-          <Ionicons name="hand-left" size={28} color="#9FE27B" />
+          <SmartGloveStatusIcon size={28} />
         </View>
       </Pressable>
 
-      <Ionicons name="volume-high-outline" size={34} color="#FFFFFF" />
+      <VolumeSettingsButton />
     </View>
   );
 }

@@ -24,7 +24,7 @@ export default function GuardianQuestionAddScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-white"
+      className="flex-1 bg-[#FDF2EC]"
     >
       <View className="px-[12px] py-5">
         <Header title="질문 추가" showSettingButton={true}/>
@@ -49,7 +49,7 @@ export default function GuardianQuestionAddScreen() {
         <Pressable
           accessibilityRole="button"
           onPress={submitQuestion}
-          className="mt-[125px] h-[60px] items-center justify-center rounded-[10px] bg-[#616161]"
+          className="mt-[125px] h-[60px] items-center justify-center rounded-[10px] bg-[#174C33]"
         >
           <Text className="text-[24px] font-bold text-white">질문 등록하기</Text>
         </Pressable>

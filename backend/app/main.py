@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
+from app.services.game_schema import ensure_game_gesture_columns
 from app.routers import (
     auth,
     users,
@@ -23,6 +24,7 @@ from app.routers import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    ensure_game_gesture_columns(engine)
     yield
 
 

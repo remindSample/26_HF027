@@ -25,6 +25,7 @@ const DEFAULT_BACKGROUND_COLOR = "#FDF2EC";
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     [DEFAULT_FONT_FAMILY]: pretendardSemiBold,
+    Chilgok_kyb: require("../assets/fonts/Chilgok_kyb.ttf"),
   });
 
   if (!fontsLoaded) {

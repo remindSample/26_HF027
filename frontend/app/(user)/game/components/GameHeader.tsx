@@ -2,9 +2,9 @@ import { router } from "expo-router";
 import type { ReactNode } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 
-import Ic_Volume from "../../../../assets/Icon/Ic_Volume.png";
-import Ic_DeviceOn from "../../../../assets/Icon/Ic_DeviceOn.png";
 import Ic_Game_Exit from "../../../../assets/Icon/Ic_Game_Exit.png";
+import SmartGloveStatusIcon from "@/features/game/SmartGloveStatusIcon";
+import VolumeSettingsButton from "@/features/game/VolumeSettingsButton";
 
 type GameHeaderProps = {
   title?: string;
@@ -25,7 +25,8 @@ export default function GameHeader({
       return;
     }
 
-    router.back();
+    if (router.canGoBack()) router.back();
+    else router.replace("/(user)/game");
   };
 
   return (
@@ -40,7 +41,7 @@ export default function GameHeader({
           <Image source={Ic_Game_Exit} style={{width: 30, height: 30}} />
           <Text className="ml-3 text-[20px] font-medium text-white">{title}</Text>
           <View className="ml-3">
-            <Image source={Ic_DeviceOn} style={{width: 26, height: 26}} />
+            <SmartGloveStatusIcon size={26} />
           </View>
         </Pressable>
       ) : (
@@ -48,7 +49,7 @@ export default function GameHeader({
       )}
 
       <View>
-        <Image source={Ic_Volume} style={{width: 30, height: 30}} resizeMode="contain" />
+        {rightElement ?? <VolumeSettingsButton size={30} />}
       </View>
     </View>
   );

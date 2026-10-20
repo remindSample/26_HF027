@@ -21,6 +21,6 @@ def get_events_by_session(db: Session, session_id: int) -> list[GameEvent]:
     return (
         db.query(GameEvent)
         .filter(GameEvent.session_id == session_id)
-        .order_by(GameEvent.created_at)
+        .order_by(GameEvent.created_at, GameEvent.id)
         .all()
     )

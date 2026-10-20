@@ -2,6 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import VolumeSettingsButton from "../src/VolumeSettingsButton";
+import SmartGloveStatusIcon from "../src/SmartGloveStatusIcon";
 
 type Level = {
   id: string;
@@ -39,7 +41,7 @@ export default function LevelScreen() {
           </View>
 
           <View className="px-[35px]">
-            <View className="mt-[120px] items-center">
+            <View className="mt-[60px] items-center">
               <Text className="text-[52px] font-black tracking-[8px] text-[#D7D7D7]">
                 Re:Mind
               </Text>
@@ -113,11 +115,11 @@ function GameHeader() {
         <Ionicons name="exit-outline" size={34} color="#FFFFFF" />
         <Text className="ml-3 text-xl font-medium text-white">나가기</Text>
         <View className="ml-3">
-          <Ionicons name="hand-left" size={28} color="#9FE27B" />
+          <SmartGloveStatusIcon size={28} />
         </View>
       </Pressable>
 
-      <Ionicons name="volume-high-outline" size={34} color="#FFFFFF" />
+      <VolumeSettingsButton />
     </View>
   );
 }

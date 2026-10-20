@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import { getMonthlyAnswerReport, type AnswerResponse } from "@/apis";
 
@@ -123,26 +123,36 @@ function MonthMemoryList({
           items.map((item) => (
             <Pressable
               key={item.id}
-              className="rounded-[14px] bg-[#E7E7E7] px-4 py-4"
+              className="px-6 py-6"
+              style={{ minHeight: selectedMemoryId === item.id ? 240 : 160 }}
               onPress={() => onSelectMemory(item.id)}
             >
-              <Text className="text-[16px] font-medium text-[#777777]">
+              <Image
+                source={selectedMemoryId === item.id
+                  ? require("@/assets/images/memory-card-open.png")
+                  : require("@/assets/images/memory-card-closed.png")}
+                resizeMode="stretch"
+                pointerEvents="none"
+                accessible={false}
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+              />
+              <Text className="text-[16px] text-[#777777]" style={{ fontFamily: "Chilgok_kyb", fontWeight: "normal" }}>
                 {item.displayDate}
               </Text>
-              <Text className="mt-4 text-[18px] font-medium leading-[27px] text-black">
+              <Text className="mt-4 text-[18px] leading-[27px] text-black" style={{ fontFamily: "Chilgok_kyb", fontWeight: "normal" }}>
                 {item.question}
               </Text>
               {selectedMemoryId === item.id ? (
-                <View className="mt-4 rounded-[10px] bg-white px-4 py-4">
-                  <Text className="text-[15px] font-medium text-[#777777]">
+                <View className="mt-4 px-4 py-4">
+                  <Text className="text-[15px] text-[#777777]" style={{ fontFamily: "Chilgok_kyb", fontWeight: "normal" }}>
                     답변
                   </Text>
-                  <Text className="mt-2 text-[18px] font-medium leading-[28px] text-black">
+                  <Text className="mt-2 text-[18px] leading-[28px] text-black" style={{ fontFamily: "Chilgok_kyb", fontWeight: "normal" }}>
                     {item.answerText}
                   </Text>
                 </View>
               ) : (
-                <Text className="mt-3 text-right text-[16px] font-medium text-[#555555]">
+                <Text className="mt-3 text-right text-[16px] text-[#555555]" style={{ fontFamily: "Chilgok_kyb", fontWeight: "normal" }}>
                   자세히 보기
                 </Text>
               )}
