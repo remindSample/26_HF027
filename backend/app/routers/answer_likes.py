@@ -16,3 +16,8 @@ def add_like(data: AnswerLikeCreate, db: Session = Depends(get_db)):
 def remove_like(answer_id: int, guardian_id: int, db: Session = Depends(get_db)):
     if not answer_like_crud.delete(db, answer_id, guardian_id):
         raise HTTPException(status_code=404, detail="Like not found")
+
+
+@router.get("/guardian/{guardian_id}", response_model=list[AnswerLikeResponse])
+def get_by_guardian(guardian_id: int, db: Session = Depends(get_db)):
+    return answer_like_crud.get_by_guardian(db, guardian_id)

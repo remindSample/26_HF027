@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./answers";
+export * from "./answer_marks";
 export * from "./client";
 export * from "./game";
 export * from "./guardian_links";

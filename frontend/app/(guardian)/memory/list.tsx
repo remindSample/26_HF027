@@ -1,6 +1,13 @@
 import {
+  addAnswerFavorite,
+  addAnswerLike,
+  getAnswerFavorites,
+  getAnswerLikes,
+  getAuthSession,
   getCurrentGuardianAcceptedLink,
   getMonthlyAnswerReport,
+  removeAnswerFavorite,
+  removeAnswerLike,
   type AnswerResponse,
 } from "@/apis";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,6 +15,7 @@ import { Link, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   Text,
@@ -30,8 +38,14 @@ const filterChips = [
   { key: "all", label: "전체" },
   { key: "month", label: "이번 달" },
   { key: "favorite", label: "", icon: "star" },
+  { key: "liked", label: "", icon: "heart" },
   { key: "positive", label: "긍정적" },
 ] as const;
+
+const ACTIVE_ICON_COLORS = {
+  star: "#E8B04B",
+  heart: "#E07A7A",
+} as const;
 
 function formatDisplayDate(value: string) {
   const date = new Date(value);
@@ -115,11 +129,13 @@ function MemoryCard({
   item,
   isOpen,
   onToggleFavorite,
+  onToggleLike,
   onToggleDetail,
 }: {
   item: MemoryItem;
   isOpen: boolean;
   onToggleFavorite: (id: number) => void;
+  onToggleLike: (id: number) => void;
   onToggleDetail: (id: number) => void;
 }) {
   return (
@@ -137,7 +153,7 @@ function MemoryCard({
           <Ionicons
             name={item.isFavorite ? "star" : "star-outline"}
             size={30}
-            color="#4D4D4D"
+            color={item.isFavorite ? ACTIVE_ICON_COLORS.star : "#4D4D4D"}
           />
         </Pressable>
       </View>
@@ -174,11 +190,16 @@ function MemoryCard({
             <Text className="text-[18px] font-medium text-black">
               {item.characterCount}자
             </Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="좋아요">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="좋아요"
+              hitSlop={8}
+              onPress={() => onToggleLike(item.id)}
+            >
               <Ionicons
                 name={item.isLiked ? "heart" : "heart-outline"}
                 size={34}
-                color="#4D4D4D"
+                color={item.isLiked ? ACTIVE_ICON_COLORS.heart : "#4D4D4D"}
               />
             </Pressable>
           </View>
@@ -193,6 +214,7 @@ export default function GuardianMemoryListScreen() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
+  const [guardianId, setGuardianId] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -201,6 +223,12 @@ export default function GuardianMemoryListScreen() {
       async function loadMemories() {
         setIsLoading(true);
         try {
+          const session = await getAuthSession();
+          const currentGuardianId = session?.user.id ?? null;
+          if (isMounted) {
+            setGuardianId(currentGuardianId);
+          }
+
           const link = await getCurrentGuardianAcceptedLink();
           if (!link) {
             if (isMounted) {
@@ -215,8 +243,24 @@ export default function GuardianMemoryListScreen() {
             now.getMonth() + 1,
             link.elder_id,
           );
+          // 조회에 실패한 쪽은 전부 false로 둡니다. (좋아요 조회 API 미배포 서버 대비)
+          const [favorites, likes] = currentGuardianId
+            ? await Promise.all([
+                getAnswerFavorites(currentGuardianId).catch(() => []),
+                getAnswerLikes(currentGuardianId).catch(() => []),
+              ])
+            : [[], []];
+          const favoriteIds = new Set(favorites.map((mark) => mark.answer_id));
+          const likedIds = new Set(likes.map((mark) => mark.answer_id));
+
           if (isMounted) {
-            setMemoryItems(report.answers.map(toMemoryItem));
+            setMemoryItems(
+              report.answers.map((answer) => ({
+                ...toMemoryItem(answer),
+                isFavorite: favoriteIds.has(answer.id),
+                isLiked: likedIds.has(answer.id),
+              })),
+            );
           }
         } catch {
           if (isMounted) {
@@ -237,13 +281,65 @@ export default function GuardianMemoryListScreen() {
     }, []),
   );
 
-  const toggleFavorite = (id: number) => {
-    setMemoryItems((items) =>
-      items.map((item) =>
-        item.id === id ? { ...item, isFavorite: !item.isFavorite } : item,
-      ),
-    );
+  const toggleMark = async (id: number, field: "isFavorite" | "isLiked") => {
+    const target = memoryItems.find((item) => item.id === id);
+    if (!target) return;
+
+    const previous = target[field];
+    const setMark = (value: boolean) =>
+      setMemoryItems((items) =>
+        items.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+      );
+
+    setMark(!previous);
+
+    try {
+      if (!guardianId) {
+        throw new Error("guardian id not found");
+      }
+
+      if (field === "isFavorite") {
+        await (previous
+          ? removeAnswerFavorite(id, guardianId)
+          : addAnswerFavorite(id, guardianId));
+      } else {
+        await (previous
+          ? removeAnswerLike(id, guardianId)
+          : addAnswerLike(id, guardianId));
+      }
+    } catch {
+      setMark(previous);
+      Alert.alert("알림", "저장에 실패했어요. 다시 시도해주세요.");
+    }
   };
+
+  const toggleFavorite = (id: number) => toggleMark(id, "isFavorite");
+
+  const toggleLike = (id: number) => toggleMark(id, "isLiked");
+
+  const visibleItems = memoryItems.filter((item) => {
+    switch (activeFilter) {
+      case "favorite":
+        return item.isFavorite;
+      case "liked":
+        return item.isLiked;
+      case "month":
+        // 현재 목록은 이번 달 답변만 조회하므로 전부 표시합니다.
+        return true;
+      case "positive":
+        // TODO: 감정 분석 연동
+        return true;
+      default:
+        return true;
+    }
+  });
+
+  const emptyMessage =
+    activeFilter === "favorite"
+      ? "즐겨찾기한 기억이 없습니다."
+      : activeFilter === "liked"
+        ? "좋아요한 기억이 없습니다."
+        : "표시할 기억이 없습니다.";
 
   return (
     <View className="flex-1 bg-[#FDF2EC]">
@@ -286,10 +382,17 @@ export default function GuardianMemoryListScreen() {
                   shadowOpacity: 0.3,
                   shadowRadius: 6,
                 }}
-                onPress={() => setActiveFilter(chip.key)}
+                onPress={() => {
+                  setActiveFilter(chip.key);
+                  setSelectedMemoryId(null);
+                }}
               >
                 {"icon" in chip ? (
-                  <Ionicons name={chip.icon} size={30} color="#1F1F1F" />
+                  <Ionicons
+                    name={isActive ? chip.icon : `${chip.icon}-outline`}
+                    size={30}
+                    color={isActive ? ACTIVE_ICON_COLORS[chip.icon] : "#1F1F1F"}
+                  />
                 ) : (
                   <Text className="text-[19px] font-medium text-black">
                     {chip.label}
@@ -305,13 +408,14 @@ export default function GuardianMemoryListScreen() {
             <View className="items-center py-4">
               <ActivityIndicator color="#174C33" />
             </View>
-          ) : memoryItems.length > 0 ? (
-            memoryItems.map((item) => (
+          ) : visibleItems.length > 0 ? (
+            visibleItems.map((item) => (
               <MemoryCard
                 key={item.id}
                 item={item}
                 isOpen={selectedMemoryId === item.id}
                 onToggleFavorite={toggleFavorite}
+                onToggleLike={toggleLike}
                 onToggleDetail={(id) =>
                   setSelectedMemoryId((current) => (current === id ? null : id))
                 }
@@ -320,7 +424,7 @@ export default function GuardianMemoryListScreen() {
           ) : (
             <View className="items-center justify-center rounded-[10px] bg-[#EEEEEE] px-5 py-12">
               <Text className="text-center text-[18px] font-medium text-[#777777]">
-                표시할 기억이 없습니다.
+                {emptyMessage}
               </Text>
             </View>
           )}

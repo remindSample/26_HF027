@@ -50,9 +50,18 @@ function QuickMenuTile({
   color,
 }: (typeof quickMenus)[number]) {
   const tile = (
-    <Pressable className="h-[112px] flex-1 items-center justify-center rounded-[14px] border-2 border-[#BFCBC7] bg-[#F9F7F4]">
-      <MaterialCommunityIcons name={icon} size={42} color={color} />
-      <Text className="mt-2 text-center text-[22px] font-medium text-[#174C33]">
+    <Pressable
+      className="h-[112px] flex-1 items-center justify-center rounded-[14px] border-2 border-black bg-[#F9F7F4]"
+      style={{
+        elevation: 3,
+        shadowColor: "#000000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 0,
+      }}
+    >
+      <MaterialCommunityIcons name={icon} size={32} color={color} />
+      <Text className="mt-2 text-center text-[16px] font-medium text-[#174C33]">
         {label}
       </Text>
     </Pressable>
@@ -223,99 +232,154 @@ export default function GuardianHomeScreen() {
         </View>
 
         <Text
-          className="mt-4 text-center text-[24px] font-bold text-[#174C33]"
+          className="mt-4 px-[13px] text-[24px] font-medium text-[#174C33]"
           numberOfLines={1}
           adjustsFontSizeToFit
         >
-          안녕하세요, {guardianName}님!
+          안녕하세요, {guardianName} 보호자님
         </Text>
 
-        <View className="mt-[52px] flex-row items-center rounded-[14px] border-2 border-[#BFCBC7] bg-[#F9F7F4] px-9 py-6">
-          <View className="h-[78px] w-[78px] items-center justify-center rounded-full bg-[#174C33]">
-            <MaterialCommunityIcons
-              name="account-outline"
-              size={62}
-              color="#FFFFFF"
-            />
+        <View
+          className="mt-[52px] overflow-hidden border-2 border-black bg-[#F9F7F4]"
+          style={{
+            elevation: 4,
+            shadowColor: "#000000",
+            shadowOffset: { width: 4, height: 4 },
+            shadowOpacity: 1,
+            shadowRadius: 0,
+          }}
+        >
+          <View className="border-b-2 border-black bg-[#F9EBDF] px-6 py-3">
+            <Text className="text-[16px] font-medium text-[#174C33]">
+              연결된 사용자
+            </Text>
           </View>
 
-          <View className="ml-7 flex-1">
-            <Text className="text-[31px] font-medium text-black">
-              {elderName ? `${elderName} 님` : "연결된 사용자 없음"}
-            </Text>
-            <View className="mt-3.5 flex-row items-center">
-              <View
-                className={`mr-2 h-[13px] w-[13px] rounded-full ${
-                  elderName ? "bg-[#64D844]" : "bg-[#BDBDBD]"
-                }`}
+          <View className="flex-row items-center px-7 py-[18px]">
+            <View className="h-16 w-16 items-center justify-center rounded-full bg-[#174C33]">
+              <MaterialCommunityIcons
+                name="account-outline"
+                size={48}
+                color="#FFFFFF"
               />
-              <Text
-                className={`text-[14px] font-medium ${
-                  elderName ? "text-[#64D844]" : "text-[#8A8A8A]"
-                }`}
-              >
-                {elderName ? "연결되었습니다" : "연결 대기 중"}
+            </View>
+
+            <View className="ml-7 flex-1">
+              <Text className="text-[22px] font-medium text-black">
+                {elderName ? `${elderName} 님` : "연결된 사용자 없음"}
               </Text>
+              <View className="mt-2 flex-row items-center">
+                <View
+                  className={`mr-2 h-[13px] w-[13px] rounded-full ${
+                    elderName ? "bg-[#64D844]" : "bg-[#BDBDBD]"
+                  }`}
+                />
+                <Text
+                  className={`text-[14px] font-medium ${
+                    elderName ? "text-[#64D844]" : "text-[#8A8A8A]"
+                  }`}
+                >
+                  {elderName ? "연결되었습니다" : "연결 대기 중"}
+                </Text>
+              </View>
             </View>
           </View>
+
+          <Link href="/(guardian)/question/add_question" asChild>
+            <Pressable
+              className="mx-[18px] mb-[18px] h-[54px] flex-row items-center justify-center rounded-full border-2 border-black bg-[#BFCBC7]"
+              style={{
+                elevation: 3,
+                shadowColor: "#000000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="plus-circle-outline"
+                size={24}
+                color="#FFFFFF"
+              />
+              <Text className="ml-2 text-[16px] font-medium text-white">
+                새로운 질문 추가하기
+              </Text>
+            </Pressable>
+          </Link>
         </View>
 
-        <Link href="/(guardian)/question/add_question" asChild>
-          <Pressable className="mt-3 h-[64px] flex-row items-center justify-center rounded-[10px] bg-[#BFCBC7]">
-            <MaterialCommunityIcons
-              name="plus-circle-outline"
-              size={34}
-              color="#000000"
-            />
-            <Text className="ml-3 text-[24px] font-medium text-black">
-              새로운 질문 추가하기
-            </Text>
-          </Pressable>
-        </Link>
-
-        <View className="mt-5 flex-row items-center rounded-[14px] border-2 border-[#BFCBC7] bg-[#F9F7F4] px-5 py-4">
+        <View
+          className="mt-5 flex-row items-center rounded-[14px] border-2 border-black bg-[#F9F7F4] px-5 py-4"
+          style={{
+            elevation: 3,
+            shadowColor: "#000000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 1,
+            shadowRadius: 0,
+          }}
+        >
           <View className="h-[52px] w-[52px] ml-3 items-center justify-center rounded-[12px] bg-[#FAEDE0]">
             <MaterialCommunityIcons
               name="bell-ring-outline"
-              size={32}
+              size={30}
               color="#174C33"
             />
           </View>
           <View className="ml-7 flex-1">
-            <Text className="text-[20px] font-bold text-[#174C33]">
+            <Text className="text-[16px] font-medium text-[#174C33]">
               {notificationTitle}
             </Text>
-            <Text className="mt-1 text-[16px] font-medium text-[#5F5F5F]">
+            <Text className="mt-1 text-[14px] font-medium text-[#5F5F5F]">
               {notificationDescription}
             </Text>
           </View>
         </View>
 
-        <View className="mt-[52px] flex-row gap-5">
-          <View className="relative flex-1 rounded-[14px] border-2 border-[#BFCBC7] bg-[#F9F7F4] px-4 pb-4 pt-[29px]">
-            <View className="absolute top-[-18px] self-center rounded-[10px] bg-[#BFCBC7] px-3 py-1">
-              <Text className="text-[18px] font-bold text-[#174C33]">
-                캐치손바닥
+        <View className="mt-5 flex-row gap-5">
+          <View
+            className="flex-1 gap-1.5 rounded-[14px] border-2 border-black bg-[#F9F7F4] px-3.5 py-3"
+            style={{
+              elevation: 3,
+              shadowColor: "#000000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 1,
+              shadowRadius: 0,
+            }}
+          >
+            <View className="self-start rounded-[8px] border border-[#8C8C8C] bg-[#FDF2EC] px-2.5 py-0.5">
+              <Text className="text-[13px] font-medium text-black">
+                손동작 게임
               </Text>
             </View>
-            <Text className="text-[20px] font-medium text-black">
-              지난 게임: level 1
+            <Text className="text-[16px] font-medium text-black" numberOfLines={1}>
+              지난 게임 Lv. 1
             </Text>
-            <Text className="mt-1 text-center text-[31px] tracking-[2px] text-[#E3E3E3]">
-              ★☆☆
+            <Text className="text-[20px] tracking-[2px]">
+              <Text className="text-[#174C33]">★</Text>
+              <Text className="text-[#CFCFCF]">☆☆</Text>
             </Text>
           </View>
 
-          <View className="relative flex-1 rounded-[14px] border-2 border-[#BFCBC7] bg-[#F9F7F4] px-4 pb-4 pt-[29px]">
-            <View className="absolute top-[-18px] self-center rounded-[10px] bg-[#BFCBC7] px-3 py-1">
-              <Text className="text-[18px] font-bold text-[#174C33]">
+          <View
+            className="flex-1 gap-1.5 rounded-[14px] border-2 border-black bg-[#F9F7F4] px-3.5 py-3"
+            style={{
+              elevation: 3,
+              shadowColor: "#000000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 1,
+              shadowRadius: 0,
+            }}
+          >
+            <View className="self-start rounded-[8px] border border-[#8C8C8C] bg-[#FDF2EC] px-2.5 py-0.5">
+              <Text className="text-[13px] font-medium text-black">
                 오늘의 답변
               </Text>
             </View>
             <Text className="text-[20px] font-medium text-black">
-              {displayedTodayAnswerCount}/{TODAY_ANSWER_GOAL}개
+              {displayedTodayAnswerCount}
+              <Text className="text-[14px] text-[#5F5F5F]">/{TODAY_ANSWER_GOAL}개</Text>
             </Text>
-            <View className="mt-3 h-[17px] overflow-hidden rounded-full bg-[#FAEDE0]">
+            <View className="h-[10px] overflow-hidden rounded-full bg-[#FAEDE0]">
               <View
                 className="h-full rounded-full bg-[#BFCBC7]"
                 style={{ width: todayAnswerProgress }}
@@ -336,60 +400,65 @@ export default function GuardianHomeScreen() {
           ))}
         </View>
 
-        <View className="mt-6 overflow-hidden rounded-t-[10px] border-2 border-[#BFCBC7] bg-[#F9F7F4]">
-          <View className="h-[78px] flex-row items-center justify-between border-b border-[#BFCBC7] bg-[#F9EBDF] px-7">
-            <Text className="text-[22px] font-medium text-[#174C33]">
+        <View className="mt-[68px]">
+          <View className="mb-[28px] flex-row items-center">
+            <Text className="text-[22px] font-medium text-[#A1978B]">
               최근 활동 기록
             </Text>
-            <MaterialCommunityIcons
-              name="history"
-              size={32}
-              color="#174C33"
-            />
+            <View className="ml-4 h-px flex-1 bg-[#D4C9BB]" />
           </View>
 
-          {isLoading ? (
-            <View className="h-[104px] items-center justify-center bg-[#F9F7F4] px-7">
-              <ActivityIndicator color="#174C33" />
-            </View>
-          ) : recentAnswers.length === 0 ? (
-            <View className="h-[104px] justify-center bg-[#F9F7F4] px-7">
-              <Text className="text-[22px] font-medium text-[#111827]">
-                최근 답변 기록이 없습니다.
-              </Text>
-              <Text className="mt-1 text-[20px] font-medium text-[#5F5F5F]">
-                사용자 연결 후 답변을 확인할 수 있습니다.
-              </Text>
-            </View>
-          ) : (
-            recentAnswers.map((answer) => (
-              <View key={answer.id} className="min-h-[104px] flex-row items-center border-b border-[#BFCBC7] bg-[#F9F7F4] px-7 py-4">
-                <View className="h-[48px] w-[48px] items-center justify-center rounded-[8px] bg-[#FAEDE0]">
-                  <MaterialCommunityIcons
-                    name="check-circle-outline"
-                    size={31}
-                    color="#174C33"
-                  />
-                </View>
-                <View className="ml-4 flex-1">
-                  <Text className="text-[18px] font-medium text-[#111827]">
-                    {answer.question_content}
-                  </Text>
-                  <Text className="pt-[4px] text-[15px] font-medium text-[#5F5F5F]">
-                    {formatAnswerTime(answer.answered_at)}
-                  </Text>
-                </View>
+          <View className="gap-4">
+            {isLoading ? (
+              <View className="items-center justify-center rounded-[14px] bg-[#FAEDE0] px-[18px] py-4">
+                <ActivityIndicator color="#174C33" />
               </View>
-            ))
-          )}
+            ) : recentAnswers.length === 0 ? (
+              <View className="rounded-[14px] bg-[#FAEDE0] px-[18px] py-4">
+                <Text className="text-[16px] font-medium text-black">
+                  최근 답변 기록이 없습니다.
+                </Text>
+                <Text className="mt-1 text-[13px] text-[#9B9B9B]">
+                  사용자 연결 후 답변을 확인할 수 있습니다.
+                </Text>
+              </View>
+            ) : (
+              recentAnswers.map((answer) => (
+                <View key={answer.id} className="flex-row items-center gap-4 rounded-[14px] bg-[#FAEDE0] px-[18px] py-4">
+                  <View className="h-10 w-10 items-center justify-center rounded-full bg-[#E6F1EA]">
+                    <MaterialCommunityIcons
+                      name="check-circle-outline"
+                      size={26}
+                      color="#7FB69A"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-[16px] leading-6 text-black">
+                      {answer.question_content}
+                    </Text>
+                    <View className="mt-1 flex-row items-center gap-1">
+                      <MaterialCommunityIcons
+                        name="clock-outline"
+                        size={13}
+                        color="#9B9B9B"
+                      />
+                      <Text className="text-[13px] text-[#9B9B9B]">
+                        {formatAnswerTime(answer.answered_at)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
         </View>
 
         {!elderName && (
         <View className="-mx-[30px] bg-[#BFCBC7] px-7 pb-5 pt-4">
-          <Text className="text-center text-[22px] font-bold text-[#174C33]">
+          <Text className="text-center text-[22px] font-medium text-[#174C33]">
             사용자와 계정연결을 진행해주세요 !
           </Text>
-          <Text className="mt-2 text-center text-[20px] font-bold text-[#174C33]">
+          <Text className="mt-2 text-center text-[20px] font-medium text-[#174C33]">
             연결 진행하기
           </Text>
         </View>
